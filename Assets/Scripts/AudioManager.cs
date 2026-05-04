@@ -24,6 +24,8 @@ public class AudioManager : MonoBehaviour
 
     public AudioClip backGround;
 
+    private float lastMoveTime = 0f;
+
     void Awake()
     {
         if (instance == null)
@@ -62,14 +64,20 @@ public class AudioManager : MonoBehaviour
     }
     public void PlayMoving()
     {
-        sfxSource.PlayOneShot(moveSound);
+        if (Time.time - lastMoveTime > 0.05f)
+        {
+            // Nhét thẳng mức volume 0.5f vào hàm PlayOneShot như tôi đã hướng dẫn bài trước
+            // ĐỪNG dùng lệnh sfxSource.volume = 0.5f nữa nhé!
+            sfxSource.PlayOneShot(moveSound, 0.5f);
 
+            // Cập nhật lại thời điểm vừa phát âm thanh
+            lastMoveTime = Time.time;
+        }
     }
     public void PlayCoin()
     {
 
-        sfxSource.PlayOneShot(coinSound);
-        sfxSource.volume = 1.5f;
+        sfxSource.PlayOneShot(coinSound, 0.8f);
     }
     void PlayBGR(AudioClip music)
     {

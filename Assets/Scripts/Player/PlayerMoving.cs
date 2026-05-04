@@ -110,6 +110,7 @@ public class PlayerMoving : MonoBehaviour
     IEnumerator Move(Player player, Vector3 currentPosition, Vector3 direction, Vector3 finalTarget)
     {
         float elapsedTime = 0f;
+        Debug.Log("Đang gọi tiếng đi bộ!");
         AudioManager.instance.PlayMoving();
         while (elapsedTime < moveDuration)
         {
@@ -129,7 +130,6 @@ public class PlayerMoving : MonoBehaviour
             gameOver.Lose();
         }
         player.transform.position = finalTarget;
-        audioSource.Stop();
         player.isMoved = false;
         Winzone.CheckWinCondition();
     }
