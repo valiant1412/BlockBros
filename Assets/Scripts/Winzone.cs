@@ -13,15 +13,15 @@ public class Winzone : MonoBehaviour
     [Header("Winzone")]
     [SerializeField] private Transform winzone1;
     [SerializeField] private Transform winzone2;
-    [SerializeField]private GameOver gameOverManager;
+    [SerializeField] private GameOver gameOverManager;
     void Start()
     {
-        
+
     }
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 
     public void CheckWinCondition()
@@ -34,15 +34,15 @@ public class Winzone : MonoBehaviour
         Vector3 winzone2Position = new Vector3(winzone2.transform.position.x, 0f, winzone2.transform.position.z);
 
         //check distance
-        bool p1_is_on_zone1 = Vector3.Distance(player1Position , winzone1Position)<0.1f;
-        bool p2_is_on_zone2 = Vector3.Distance(player2Position , winzone2Position)<0.1f;
+        bool p1_is_on_zone1 = Vector3.Distance(player1Position, winzone1Position) < 0.1f;
+        bool p2_is_on_zone2 = Vector3.Distance(player2Position, winzone2Position) < 0.1f;
 
-        bool p1_is_on_zone2 = Vector3.Distance(player1Position , winzone2Position)<0.1f;
-        bool p2_is_on_zone1 = Vector3.Distance(player2Position , winzone1Position)<0.1f;
+        bool p1_is_on_zone2 = Vector3.Distance(player1Position, winzone2Position) < 0.1f;
+        bool p2_is_on_zone1 = Vector3.Distance(player2Position, winzone1Position) < 0.1f;
 
-        if(( p1_is_on_zone1 && p2_is_on_zone2) || (p1_is_on_zone2 && p2_is_on_zone1))
+        if ((p1_is_on_zone1 && p2_is_on_zone2) || (p1_is_on_zone2 && p2_is_on_zone1))
         {
-            gameOverManager.Win();
+            //gameOverManager.Win();
         }
     }
 }

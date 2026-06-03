@@ -73,7 +73,6 @@ public class ButtonManagement : MonoBehaviour
     }
     public void LevelBtn()
     {
-        SceneManager.LoadScene("LevelMenu");
         AudioManager.instance.PlayClickSFX();
 
         Time.timeScale = 1f;

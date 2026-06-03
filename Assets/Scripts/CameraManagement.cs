@@ -9,7 +9,7 @@ public class IsometricGroupCamera : MonoBehaviour
     [Header("Góc nhìn & Vị trí (Tâm hoàn hảo)")]
     [Tooltip("Khoảng cách từ Camera soi thẳng xuống nhân vật (Ví dụ: 20)")]
     public float distance = 20f;
-    
+
     [Tooltip("Độ mượt khi lướt camera (0.15 - 0.3 là đẹp)")]
     public float moveSmoothTime = 0.2f;
 
@@ -72,10 +72,10 @@ public class IsometricGroupCamera : MonoBehaviour
     {
         // Đo khoảng cách giữa 2 nhân vật
         float distanceBetweenTargets = Vector3.Distance(target1.position, target2.position);
-        
+
         // Tính toán Size phù hợp
         float targetSize = Mathf.Lerp(minSize, maxSize, distanceBetweenTargets / distanceLimiter);
-        
+
         // Zoom mượt mà
         cam.orthographicSize = Mathf.Lerp(cam.orthographicSize, targetSize, Time.deltaTime * zoomSmoothSpeed);
     }
@@ -86,5 +86,12 @@ public class IsometricGroupCamera : MonoBehaviour
         if (target1 == null || target2 == null) return;
         Vector3 centerPoint = (target1.position + target2.position) / 2f;
         transform.position = centerPoint - (transform.forward * distance) + framingOffset;
+    }
+    public void SetupPlayer(Player player1, Player player2)
+    {
+        target1 = player1.transform;
+        target2 = player2.transform;
+
+        Debug.Log("Đã gán nhân vật, camera có thể theo nhân vật được rồi");
     }
 }

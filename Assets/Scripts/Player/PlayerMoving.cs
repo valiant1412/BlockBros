@@ -131,7 +131,7 @@ public class PlayerMoving : MonoBehaviour
         }
         player.transform.position = finalTarget;
         player.isMoved = false;
-        Winzone.CheckWinCondition();
+        //Winzone.CheckWinCondition();
     }
 
     bool IsDistanceAllowed(Vector3 finalTarget1, Vector3 finalTarget2)
@@ -152,8 +152,12 @@ public class PlayerMoving : MonoBehaviour
 
         return true;
     }
-    void JumpSPX()
-    {
 
+    public void SetupPlayer(Player player1, Player player2)
+    {
+        this.player1 = player1;
+        this.player2 = player2;
+
+        Debug.Log("Đã gán nhân vật, có thể di chuyển được rồi");
     }
 }
