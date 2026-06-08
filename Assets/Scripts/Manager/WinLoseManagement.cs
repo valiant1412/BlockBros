@@ -1,0 +1,92 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class WinLoseManagement : MonoBehaviour
+{
+    public static WinLoseManagement Instance;
+    private float playerArrived = 0;
+    [Header("Nhân vật chơi")]
+    [SerializeField] private Player player1;
+    [SerializeField] private Player player2;
+
+    [Header("Winzone")]
+    [SerializeField] private Transform winzone1;
+    [SerializeField] private Transform winzone2;
+
+    [SerializeField] private GameObject winUI;
+
+    [SerializeField] private GameObject loseUI;
+    void Start()
+    {
+        Instance = this;
+    }
+    public void CheckWinCondition()
+    {
+        Vector3 player1Position = new Vector3(player1.transform.position.x, 0f, player1.transform.position.z);
+        Vector3 player2Position = new Vector3(player2.transform.position.x, 0f, player2.transform.position.z);
+
+        // position of winzone
+        Vector3 winzone1Position = new Vector3(winzone1.transform.position.x, 0f, winzone1.transform.position.z);
+        Vector3 winzone2Position = new Vector3(winzone2.transform.position.x, 0f, winzone2.transform.position.z);
+
+        //check distance
+        bool p1_is_on_zone1 = Vector3.Distance(player1Position, winzone1Position) < 0.1f;
+        bool p2_is_on_zone2 = Vector3.Distance(player2Position, winzone2Position) < 0.1f;
+
+        bool p1_is_on_zone2 = Vector3.Distance(player1Position, winzone2Position) < 0.1f;
+        bool p2_is_on_zone1 = Vector3.Distance(player2Position, winzone1Position) < 0.1f;
+
+        if ((p1_is_on_zone1 && p2_is_on_zone2) || (p1_is_on_zone2 && p2_is_on_zone1))
+        {
+            Win();
+        }
+    }
+    public void Lose()
+    {
+        gameObject.SetActive(true);
+        AudioManager.instance.PlayLose();
+
+        Time.timeScale = 0f;
+        loseUI.SetActive(true);
+    }
+    public void Win()
+    {
+        gameObject.SetActive(true);
+        AudioManager.instance.PlayWin();
+        Time.timeScale = 0f;
+
+        var currentLevel = PlayerPrefs.GetInt("LevelInPlay");
+        var highestLevel = PlayerPrefs.GetInt("HighestLevel");
+
+        if (currentLevel + 1 > highestLevel)
+        {
+            PlayerPrefs.SetInt("HighestLevel", currentLevel + 1);
+            PlayerPrefs.SetInt("LevelInPlay", currentLevel + 1);
+        }
+        winUI.SetActive(true);
+    }
+    public void SetupInput(Player player1, Player player2, Transform winzone1, Transform winzone2)
+    {
+        this.player1 = player1;
+        this.player2 = player2;
+        this.winzone1 = winzone1;
+        this.winzone2 = winzone2;
+    }
+
+    public void EnableWinUI()
+    {
+        if (!winUI.activeInHierarchy)
+        {
+            winUI.SetActive(false);
+        }
+    }
+
+    public void EnableLoseUI()
+    {
+        if (!winUI.activeInHierarchy)
+        {
+            loseUI.SetActive(false);
+        }
+    }
+}

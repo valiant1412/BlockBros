@@ -12,7 +12,7 @@ public class LevelSelectionUI : MonoBehaviour
 
     public int totalLevel;
     // Start is called before the first frame update
-    void Start()
+    void OnEnable()
     {
         GenerateLevels();
     }

@@ -15,4 +15,5 @@ public class GameManagerment : MonoBehaviour
         GameObject map = Resources.Load<GameObject>(mapName);
         Instantiate(map);
     }
+
 }

@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerManagement : MonoBehaviour
-{   
+{
+    public static PlayerManagement Instance;
     [Header("Nhân vật game")]
-    
+
     [Header("Layer game")]
     [SerializeField] private LayerMask blockLayer;
     [SerializeField] private LayerMask playerLayer;
@@ -25,6 +26,7 @@ public class PlayerManagement : MonoBehaviour
 
     void Awake()
     {
+        Instance = this;
     }
 
     public bool IsBlocked(Player player, Vector3 currentPosition, Vector3 direction, out Vector3 finalTarget)
@@ -75,7 +77,7 @@ public class PlayerManagement : MonoBehaviour
             {
                 var besidePlayer = newHit.collider.gameObject.GetComponent<Player>();
                 if (besidePlayer.isBlockByObject)
-                {   
+                {
                     return true;
                 }
             }
@@ -92,5 +94,4 @@ public class PlayerManagement : MonoBehaviour
         // Chỉ khi mọi thứ ok mới gọi Coroutine di chuyển
         return false;
     }
-
 }

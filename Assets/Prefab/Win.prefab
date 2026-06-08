@@ -612,7 +612,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 5836492870647915810}
         m_TargetAssemblyTypeName: ButtonManagement, Assembly-CSharp
-        m_MethodName: HomeBtn
+        m_MethodName: LevelBtn
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -783,7 +783,6 @@ GameObject:
   - component: {fileID: 7578594479550340561}
   - component: {fileID: 7452640477056456479}
   - component: {fileID: 4330424408085982025}
-  - component: {fileID: 3823529949467106474}
   - component: {fileID: 5836492870647915810}
   m_Layer: 5
   m_Name: Win
@@ -853,21 +852,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &3823529949467106474
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6400359407891977385}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f7f3df0a9a1045248945a9772b3d409c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  player1: {fileID: 0}
-  player2: {fileID: 0}
-  mytext: {fileID: 6306316528446273997}
 --- !u!114 &5836492870647915810
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -880,7 +864,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d8609a7588f4864983732c8da855f94, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  stopPopup: {fileID: 0}
+  stopPopup: {fileID: 6400359407891977385}
   popUpSound: {fileID: 0}
 --- !u!1 &7930037792774314637
 GameObject:

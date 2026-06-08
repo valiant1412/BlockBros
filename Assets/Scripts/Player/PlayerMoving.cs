@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class PlayerMoving : MonoBehaviour
 {
+    public static PlayerMoving Instance;
     [Header("Nhân vật game")]
     [SerializeField] private Player player1;
     [SerializeField] private Player player2;
@@ -13,9 +14,6 @@ public class PlayerMoving : MonoBehaviour
     [SerializeField] private LayerMask walkableLayer;
 
     [Header("Class cần thiết")]
-    [SerializeField] private GameOver gameOver;
-
-    [SerializeField] private Winzone Winzone;
 
     [SerializeField] private ToggleBanner toggleBanner;
 
@@ -35,12 +33,12 @@ public class PlayerMoving : MonoBehaviour
 
     void Awake()
     {
-        gameOver = FindAnyObjectByType<GameOver>(FindObjectsInactive.Include);
+        Instance = this;
     }
 
     void Update()
     {
-
+        if (player1 == null || player2 == null) return;
         if (!player1.isMoved && !player2.isMoved)
         {
             // Gác cổng: Đang di chuyển thì cấm nhận phím
@@ -114,6 +112,7 @@ public class PlayerMoving : MonoBehaviour
         AudioManager.instance.PlayMoving();
         while (elapsedTime < moveDuration)
         {
+            if (player1 == null || player2 == null) yield break;
             float percent = elapsedTime / moveDuration;
             var jumpHeight = 0.5f;
             float heightOffset = Mathf.Sin(percent * Mathf.PI) * jumpHeight;
@@ -127,11 +126,11 @@ public class PlayerMoving : MonoBehaviour
         }
         if (finalTarget.y <= -20f)
         {
-            gameOver.Lose();
+            WinLoseManagement.Instance.Lose();
         }
         player.transform.position = finalTarget;
         player.isMoved = false;
-        //Winzone.CheckWinCondition();
+        WinLoseManagement.Instance.CheckWinCondition();
     }
 
     bool IsDistanceAllowed(Vector3 finalTarget1, Vector3 finalTarget2)
@@ -159,5 +158,15 @@ public class PlayerMoving : MonoBehaviour
         this.player2 = player2;
 
         Debug.Log("Đã gán nhân vật, có thể di chuyển được rồi");
+    }
+
+    public void ResetMovement()
+    {
+        // 1. CHẶN ĐỨNG BÓNG MA: Dừng ngay lập tức Coroutine đang chạy dở
+        StopAllCoroutines();
+
+        // 3. Xé bỏ hồ sơ nhân viên cũ (Để Lính gác ở hàm Update chặn lại ngay)
+        player1 = null;
+        player2 = null;
     }
 }

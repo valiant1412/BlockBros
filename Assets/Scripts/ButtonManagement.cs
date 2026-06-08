@@ -26,7 +26,8 @@ public class ButtonManagement : MonoBehaviour
         AudioManager.instance.PlayClickSFX();
 
         Time.timeScale = 1f;
-        SceneManager.LoadScene(currentLevel.ToString());
+        LevelManagement.Instance.StartLevel(currentLevel.ToString());
+        stopPopup.SetActive(false);
     }
     public void StartBtn()
     {
@@ -74,24 +75,21 @@ public class ButtonManagement : MonoBehaviour
     public void LevelBtn()
     {
         AudioManager.instance.PlayClickSFX();
+        // enable lại bảng
+        stopPopup.SetActive(false);
 
+        // 2. Báo cho Giám đốc dọn dẹp Map và mở Menu
+        if (LevelManagement.Instance != null)
+        {
+            LevelManagement.Instance.ReturnToMenu();
+        }
         Time.timeScale = 1f;
     }
     public void NextBtn()
     {
         var currentLevel = PlayerPrefs.GetInt("LevelInPlay");
-        SceneManager.LoadScene((currentLevel + 1).ToString());
-
+        LevelManagement.Instance.StartLevel(currentLevel.ToString());
         AudioManager.instance.PlayClickSFX();
-
-        // lấy ra màn cao nhất đã đạt được
-        var highestLevel = PlayerPrefs.GetInt("HighestLevel");
-        if (currentLevel + 1 > highestLevel)
-        {
-            PlayerPrefs.SetInt("HighestLevel", currentLevel + 1);
-        }
-        PlayerPrefs.SetInt("LevelInPlay", currentLevel + 1);
-
         Time.timeScale = 1f;
     }
 }

@@ -11,7 +11,7 @@ public class LevelManagement : MonoBehaviour
 
 
     [Header("Quản lí level")]
-    private GameObject currentMap;
+    public GameObject currentMap;
 
     [SerializeField] private GameObject levelSelectedUI;
     void Awake()
@@ -32,6 +32,20 @@ public class LevelManagement : MonoBehaviour
         if (currentMap != null) Destroy(currentMap);
 
         currentMap = Instantiate(map, Vector3.zero, Quaternion.identity);
+    }
+    public void ReturnToMenu()
+    {
+        if (PlayerMoving.Instance != null)
+        {
+            PlayerMoving.Instance.ResetMovement();
+        }
+        if (currentMap != null)
+        {
+            Destroy(currentMap);
+            currentMap = null;
+        }
+        levelSelectedUI.SetActive(true);
+        Time.timeScale = 1f;
     }
 
 }
