@@ -73,63 +73,82 @@ public class PlayerMoving : MonoBehaviour
         var currentPosition1 = player1.transform.position;
         var currentPosition2 = player2.transform.position;
 
-        // lay ra dc final target
-
         bool isPlayer1Blocked = playerManagement.IsBlocked(player1, currentPosition1, direction, out Vector3 finalTarget1);
-
         bool isPlayer2Blocked = playerManagement.IsBlocked(player2, currentPosition2, direction, out Vector3 finalTarget2);
 
+        // 1. Xác định đích đến THỰC TẾ (Nếu bị chặn thì đích đến chính là chỗ đang đứng)
+        Vector3 actualTarget1 = isPlayer1Blocked ? currentPosition1 : finalTarget1;
+        Vector3 actualTarget2 = isPlayer2Blocked ? currentPosition2 : finalTarget2;
 
-        if (!isPlayer1Blocked)
+        // 2. Kiểm tra khoảng cách dây xích dựa trên đích đến thực tế
+        if (!IsDistanceAllowed(actualTarget1, actualTarget2))
         {
-            player1.isMoved = true;
-            if (!IsDistanceAllowed(finalTarget1, finalTarget2))
-            {
-                player1.isMoved = false;
-                Debug.Log(finalTarget1);
-                return;
-            }
-            StartCoroutine(Move(player1, currentPosition1, direction, finalTarget1));
-        }
-        if (!isPlayer2Blocked)
-        {
-            player2.isMoved = true;
-            if (!IsDistanceAllowed(finalTarget1, finalTarget2))
-            {
-                player2.isMoved = false;
-                Debug.Log(finalTarget2);
-                return;
-            }
-            StartCoroutine(Move(player2, currentPosition2, direction, finalTarget2));
+            // HIỆU ỨNG HAY: Nếu đi xa quá đứt xích, cả 2 sẽ bị giật nảy tại chỗ
+            actualTarget1 = currentPosition1;
+            actualTarget2 = currentPosition2;
+            isPlayer1Blocked = true;
+            isPlayer2Blocked = true;
         }
 
+        // 3. Khóa điều khiển và gọi Coroutine cho cả 2 con (kèm theo cờ báo hiệu bị chặn)
+        player1.isMoved = true;
+        player2.isMoved = true;
+
+        StartCoroutine(Move(player1, currentPosition1, direction, actualTarget1, isPlayer1Blocked));
+        StartCoroutine(Move(player2, currentPosition2, direction, actualTarget2, isPlayer2Blocked));
     }
 
-    IEnumerator Move(Player player, Vector3 currentPosition, Vector3 direction, Vector3 finalTarget)
+    // CHÚ Ý: Đã thêm tham số "bool isBlocked" vào cuối hàm
+    IEnumerator Move(Player player, Vector3 currentPosition, Vector3 direction, Vector3 finalTarget, bool isBlocked)
     {
         float elapsedTime = 0f;
         Debug.Log("Đang gọi tiếng đi bộ!");
         AudioManager.instance.PlayMoving();
+
         while (elapsedTime < moveDuration)
         {
+            // Lính gác chống lỗi bóng ma (Zombie Coroutine)
             if (player1 == null || player2 == null) yield break;
+
             float percent = elapsedTime / moveDuration;
-            var jumpHeight = 0.5f;
+
+            // Nếu bị chặn thì nhảy thấp hơn một chút (0.2f) cho tự nhiên, đi bình thường nhảy cao 0.5f
+            float jumpHeight = isBlocked ? 0.2f : 0.5f;
             float heightOffset = Mathf.Sin(percent * Mathf.PI) * jumpHeight;
 
-            var currentPos = Vector3.Lerp(currentPosition, finalTarget, percent);
-            currentPos.y += heightOffset * 0.5f;
+            Vector3 currentPos;
+
+            if (isBlocked)
+            {
+                // TẠO HIỆU ỨNG CỤNG TƯỜNG: 
+                // Nhân vật rướn người về phía trước (hướng direction) tối đa 0.2 ô rồi lùi lại
+                float bumpOffset = Mathf.Sin(percent * Mathf.PI) * 0.2f;
+                currentPos = currentPosition + direction * bumpOffset;
+            }
+            else
+            {
+                // DI CHUYỂN BÌNH THƯỜNG: Trượt mượt mà đến ô tiếp theo (Bao gồm cả rớt vực, lên thang)
+                currentPos = Vector3.Lerp(currentPosition, finalTarget, percent);
+            }
+
+            // Cộng thêm độ nảy trục Y
+            currentPos.y += heightOffset;
 
             elapsedTime += Time.deltaTime;
             player.transform.position = currentPos;
             yield return null;
         }
-        if (finalTarget.y <= -20f)
+
+        // Xử lý luật chơi (Chỉ xét rơi vực nếu KHÔNG bị chặn)
+        if (!isBlocked && finalTarget.y <= -20f)
         {
             WinLoseManagement.Instance.Lose();
         }
-        player.transform.position = finalTarget;
+
+        // CHỐT TỌA ĐỘ: Đảm bảo nhân vật đứng chuẩn xác giữa ô vuông sau khi xong animation
+        player.transform.position = isBlocked ? currentPosition : finalTarget;
         player.isMoved = false;
+
         WinLoseManagement.Instance.CheckWinCondition();
     }
 
