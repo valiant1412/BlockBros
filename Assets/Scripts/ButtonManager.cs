@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class ButtonManagement : MonoBehaviour
+public class ButtonManager : MonoBehaviour
 {
     // Start is called before the first frame update
     [SerializeField] private GameObject stopPopup;
@@ -24,9 +24,24 @@ public class ButtonManagement : MonoBehaviour
     {
         var currentLevel = PlayerPrefs.GetInt("LevelInPlay");
         AudioManager.instance.PlayClickSFX();
+        // 1. CHẶN ĐỨNG BÓNG MA: Báo cho Giám đốc di chuyển dọn dẹp Coroutine
+        if (PlayerMoving.Instance != null)
+        {
+            PlayerMoving.Instance.ResetMovement();
+        }
+
+        // 3. MỞ KHÓA THỜI GIAN: Lúc Game Over bạn đã set Time.timeScale = 0, 
+        // giờ chơi lại bắt buộc phải trả về 1, nếu không game sẽ bị đơ!
+        Time.timeScale = 1f;
+
+        // 4. Sinh ra Map mới (Gọi lại hàm StartLevel hoặc logic sinh map của bạn)
+        // Ví dụ: StartLevel(currentLevelIndex);
+
+        // 5. Ẩn bảng Game Over đi
+        // losePanel.SetActive(false);
 
         Time.timeScale = 1f;
-        LevelManagement.Instance.StartLevel(currentLevel.ToString());
+        LevelManager.Instance.StartLevel(currentLevel.ToString());
         stopPopup.SetActive(false);
     }
     public void StartBtn()
@@ -79,17 +94,23 @@ public class ButtonManagement : MonoBehaviour
         stopPopup.SetActive(false);
 
         // 2. Báo cho Giám đốc dọn dẹp Map và mở Menu
-        if (LevelManagement.Instance != null)
+        if (LevelManager.Instance != null)
         {
-            LevelManagement.Instance.ReturnToMenu();
+            LevelManager.Instance.ReturnToMenu();
         }
         Time.timeScale = 1f;
     }
     public void NextBtn()
     {
         var currentLevel = PlayerPrefs.GetInt("LevelInPlay");
-        LevelManagement.Instance.StartLevel(currentLevel.ToString());
+        LevelManager.Instance.StartLevel(currentLevel.ToString());
+
         AudioManager.instance.PlayClickSFX();
+        if (WinLoseManager.Instance != null)
+        {
+            WinLoseManager.Instance.SetActiveToWinUIToFalse();
+        }
+
         Time.timeScale = 1f;
     }
 }

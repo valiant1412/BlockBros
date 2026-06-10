@@ -2,11 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class LevelManagement : MonoBehaviour
+public class LevelManager : MonoBehaviour
 {
 
     //Description: : Lắng nghe khi nút được bấm -> Tắt bảng UI -> Mở Map ra cho khủng long chạy.
-    public static LevelManagement Instance;
+    public static LevelManager Instance;
     // Start is called before the first frame update
 
 
@@ -32,6 +32,8 @@ public class LevelManagement : MonoBehaviour
         if (currentMap != null) Destroy(currentMap);
 
         currentMap = Instantiate(map, Vector3.zero, Quaternion.identity);
+        WinLoseManager.Instance.isGameEnded = false;
+        PlayerPrefs.SetInt("LevelInPlay", int.Parse(name));
     }
     public void ReturnToMenu()
     {

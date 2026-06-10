@@ -35,7 +35,7 @@ public class LevelSeleceted : MonoBehaviour
     private void OnLevelButtonClicked()
     {
         // chuyển màn
-        LevelManagement.Instance.StartLevel(myLevelIndex.ToString());
+        LevelManager.Instance.StartLevel(myLevelIndex.ToString());
     }
 
     private void ChangeColor(string hex)

@@ -17,7 +17,7 @@ public class PlayerMoving : MonoBehaviour
 
     [SerializeField] private ToggleBanner toggleBanner;
 
-    [SerializeField] private PlayerManagement playerManagement;
+    [SerializeField] private PlayerManager playerManagement;
 
     [Header("Âm thanh")]
     [SerializeField] private AudioSource audioSource;
@@ -31,6 +31,11 @@ public class PlayerMoving : MonoBehaviour
 
     [SerializeField] private int maxDistance;
 
+    public float minSwipeDistance = 50f;
+
+    private Vector2 startTouchPosition;
+    private Vector2 endTouchPosition;
+
     void Awake()
     {
         Instance = this;
@@ -39,6 +44,19 @@ public class PlayerMoving : MonoBehaviour
     void Update()
     {
         if (player1 == null || player2 == null) return;
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            startTouchPosition = Input.mousePosition;
+        }
+
+        // Khi nhấc tay lên (hoặc nhả chuột trái)
+        if (Input.GetMouseButtonUp(0))
+        {
+            endTouchPosition = Input.mousePosition;
+            DetectSwipe();
+        }
+
         if (!player1.isMoved && !player2.isMoved)
         {
             // Gác cổng: Đang di chuyển thì cấm nhận phím
@@ -68,6 +86,36 @@ public class PlayerMoving : MonoBehaviour
 
     }
 
+    private void DetectSwipe()
+    {
+        // Tính khoảng cách từ điểm Bắt đầu đến điểm Kết thúc
+        Vector2 swipeDelta = endTouchPosition - startTouchPosition;
+
+        // Kiểm tra xem quãng đường vuốt có đủ dài không (Lớn hơn ngưỡng minSwipeDistance)
+        if (swipeDelta.magnitude >= minSwipeDistance)
+        {
+            // Trị tuyệt đối để xem vuốt theo chiều Ngang hay chiều Dọc dài hơn
+            float xDistance = Mathf.Abs(swipeDelta.x);
+            float yDistance = Mathf.Abs(swipeDelta.y);
+
+            if (xDistance > yDistance)
+            {
+                // VUỐT CHIỀU NGANG
+                if (swipeDelta.x > 0)
+                    ProcessMoving(player1, player2, Vector3.right); // Vuốt sang phải
+                else
+                    ProcessMoving(player1, player2, Vector3.left);  // Vuốt sang trái
+            }
+            else
+            {
+                // VUỐT CHIỀU DỌC
+                if (swipeDelta.y > 0)
+                    ProcessMoving(player1, player2, Vector3.forward); // Vuốt lên trên
+                else
+                    ProcessMoving(player1, player2, Vector3.back);    // Vuốt xuống dưới
+            }
+        }
+    }
     void ProcessMoving(Player player1, Player player2, Vector3 direction)
     {
         var currentPosition1 = player1.transform.position;
@@ -97,6 +145,7 @@ public class PlayerMoving : MonoBehaviour
         StartCoroutine(Move(player1, currentPosition1, direction, actualTarget1, isPlayer1Blocked));
         StartCoroutine(Move(player2, currentPosition2, direction, actualTarget2, isPlayer2Blocked));
     }
+
 
     // CHÚ Ý: Đã thêm tham số "bool isBlocked" vào cuối hàm
     IEnumerator Move(Player player, Vector3 currentPosition, Vector3 direction, Vector3 finalTarget, bool isBlocked)
@@ -142,15 +191,22 @@ public class PlayerMoving : MonoBehaviour
         // Xử lý luật chơi (Chỉ xét rơi vực nếu KHÔNG bị chặn)
         if (!isBlocked && finalTarget.y <= -20f)
         {
-            WinLoseManagement.Instance.Lose();
+            WinLoseManager.Instance.Lose();
         }
 
         // CHỐT TỌA ĐỘ: Đảm bảo nhân vật đứng chuẩn xác giữa ô vuông sau khi xong animation
         player.transform.position = isBlocked ? currentPosition : finalTarget;
         player.isMoved = false;
 
-        WinLoseManagement.Instance.CheckWinCondition();
+        var isWin = WinLoseManager.Instance.CheckWinCondition();
+        var levelInplay = PlayerPrefs.GetInt("LevelInPlay");
+        Debug.Log("Level IN play is" + levelInplay);
+        if (isWin)
+        {
+            WinLoseManager.Instance.Win();
+        }
     }
+
 
     bool IsDistanceAllowed(Vector3 finalTarget1, Vector3 finalTarget2)
     {

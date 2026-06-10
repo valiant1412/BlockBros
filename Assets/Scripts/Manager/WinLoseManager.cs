@@ -2,9 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class WinLoseManagement : MonoBehaviour
+public class WinLoseManager : MonoBehaviour
 {
-    public static WinLoseManagement Instance;
+    public static WinLoseManager Instance;
     private float playerArrived = 0;
     [Header("Nhân vật chơi")]
     [SerializeField] private Player player1;
@@ -17,11 +17,13 @@ public class WinLoseManagement : MonoBehaviour
     [SerializeField] private GameObject winUI;
 
     [SerializeField] private GameObject loseUI;
+
+    public bool isGameEnded = false;
     void Start()
     {
         Instance = this;
     }
-    public void CheckWinCondition()
+    public bool CheckWinCondition()
     {
         Vector3 player1Position = new Vector3(player1.transform.position.x, 0f, player1.transform.position.z);
         Vector3 player2Position = new Vector3(player2.transform.position.x, 0f, player2.transform.position.z);
@@ -39,19 +41,26 @@ public class WinLoseManagement : MonoBehaviour
 
         if ((p1_is_on_zone1 && p2_is_on_zone2) || (p1_is_on_zone2 && p2_is_on_zone1))
         {
-            Win();
+            return true;
         }
+        return false;
     }
     public void Lose()
     {
+        if (isGameEnded) return;
+        isGameEnded = true;
         gameObject.SetActive(true);
         AudioManager.instance.PlayLose();
 
         Time.timeScale = 0f;
+
         loseUI.SetActive(true);
     }
     public void Win()
     {
+        if (isGameEnded) return;
+        isGameEnded = true;
+
         gameObject.SetActive(true);
         AudioManager.instance.PlayWin();
         Time.timeScale = 0f;
@@ -59,11 +68,16 @@ public class WinLoseManagement : MonoBehaviour
         var currentLevel = PlayerPrefs.GetInt("LevelInPlay");
         var highestLevel = PlayerPrefs.GetInt("HighestLevel");
 
+        PlayerPrefs.SetInt("LevelInPlay", currentLevel + 1);
+
         if (currentLevel + 1 > highestLevel)
         {
             PlayerPrefs.SetInt("HighestLevel", currentLevel + 1);
-            PlayerPrefs.SetInt("LevelInPlay", currentLevel + 1);
+
         }
+
+
+
         winUI.SetActive(true);
     }
     public void SetupInput(Player player1, Player player2, Transform winzone1, Transform winzone2)
@@ -74,19 +88,20 @@ public class WinLoseManagement : MonoBehaviour
         this.winzone2 = winzone2;
     }
 
-    public void EnableWinUI()
+    public void SetActiveToWinUIToFalse()
     {
-        if (!winUI.activeInHierarchy)
+        if (winUI.activeInHierarchy)
         {
             winUI.SetActive(false);
         }
     }
 
-    public void EnableLoseUI()
+    public void SetActiveToLoseUIToFalse()
     {
-        if (!winUI.activeInHierarchy)
+        if (loseUI.activeInHierarchy)
         {
             loseUI.SetActive(false);
         }
     }
+
 }

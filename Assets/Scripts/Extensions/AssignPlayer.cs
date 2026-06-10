@@ -23,9 +23,25 @@ public class AssignPlayer : MonoBehaviour
             PlayerMoving.Instance.SetupPlayer(player1, player2);
         }
         // assign cho Player Management.
-        if (WinLoseManagement.Instance != null)
+        if (WinLoseManager.Instance != null)
         {
-            WinLoseManagement.Instance.SetupInput(player1, player2, winzone1, winzone2);
+            WinLoseManager.Instance.SetupInput(player1, player2, winzone1, winzone2);
         }
+        int totalCoinInMap = FindTotalCoin();
+        if (ScoreManager.Instance != null)
+        {
+            ScoreManager.Instance.SetupForNewLevel(totalCoinInMap);
+        }
+
+    }
+
+    int FindTotalCoin()
+    {
+        // Quét toàn bộ các vật thể con bên trong Map này
+        Coin[] allCoinsInMap = GetComponentsInChildren<Coin>(true);
+
+        // Số lượng xu chính là độ dài của danh sách vừa tìm được! Không cần vòng lặp.
+        int coinCount = allCoinsInMap.Length;
+        return coinCount;
     }
 }

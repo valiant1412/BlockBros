@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameManagerment : MonoBehaviour
+public class GameManager : MonoBehaviour
 {
     [Header("Nhân vật game")]
     [SerializeField] private Player player1;

@@ -2,9 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerManagement : MonoBehaviour
+public class PlayerManager : MonoBehaviour
 {
-    public static PlayerManagement Instance;
+    public static PlayerManager Instance;
     [Header("Nhân vật game")]
 
     [Header("Layer game")]
@@ -27,6 +27,7 @@ public class PlayerManagement : MonoBehaviour
     void Awake()
     {
         Instance = this;
+        Application.targetFrameRate = 60;
     }
 
     public bool IsBlocked(Player player, Vector3 currentPosition, Vector3 direction, out Vector3 finalTarget)

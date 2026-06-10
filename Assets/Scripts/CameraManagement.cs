@@ -92,6 +92,7 @@ public class IsometricGroupCamera : MonoBehaviour
         target1 = player1.transform;
         target2 = player2.transform;
 
+        SnapToCenter();
         Debug.Log("Đã gán nhân vật, camera có thể theo nhân vật được rồi");
     }
 }

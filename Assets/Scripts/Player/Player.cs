@@ -17,7 +17,6 @@ public class Player : MonoBehaviour
 
     private RaycastHit hit;
 
-    [SerializeField] private GameOver gameOver;
 
     void Awake()
     {
@@ -27,7 +26,7 @@ public class Player : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Trap"))
         {
-            WinLoseManagement.Instance.Lose();
+            WinLoseManager.Instance.Lose();
         }
     }
     // Start is called before the first frame update
