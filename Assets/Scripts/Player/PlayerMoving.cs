@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using CandyCoded.HapticFeedback;
 using UnityEngine;
 
 public class PlayerMoving : MonoBehaviour
@@ -45,74 +46,90 @@ public class PlayerMoving : MonoBehaviour
     {
         if (player1 == null || player2 == null) return;
 
+        // 1. Luôn ghi nhận thao tác chạm xuống để không bị rớt nhịp của người chơi
         if (Input.GetMouseButtonDown(0))
         {
             startTouchPosition = Input.mousePosition;
         }
 
-        // Khi nhấc tay lên (hoặc nhả chuột trái)
+        // 2. KHI NHẢ TAY RA CHUẨN BỊ DI CHUYỂN
         if (Input.GetMouseButtonUp(0))
         {
             endTouchPosition = Input.mousePosition;
-            DetectSwipe();
+
+            // LÍNH GÁC 1: Chỉ cho phép xử lý vuốt nếu cả 2 con đã đứng yên tĩnh
+            if (!player1.isMoved && !player2.isMoved)
+            {
+                DetectSwipe();
+            }
         }
 
+        // 3. KHI BẤM PHÍM TRÊN MÁY TÍNH
+        // LÍNH GÁC 2: Chỉ nhận phím khi đã đứng yên
         if (!player1.isMoved && !player2.isMoved)
         {
-            // Gác cổng: Đang di chuyển thì cấm nhận phím
             if (Input.GetKeyDown(KeyCode.A))
             {
                 ProcessMoving(player1, player2, Vector3.left);
-
             }
             else if (Input.GetKeyDown(KeyCode.D))
             {
                 ProcessMoving(player1, player2, Vector3.right);
             }
-
             else if (Input.GetKeyDown(KeyCode.W))
             {
                 ProcessMoving(player1, player2, Vector3.forward);
-
             }
-
             else if (Input.GetKeyDown(KeyCode.S))
             {
                 ProcessMoving(player1, player2, Vector3.back);
-
             }
-
         }
-
     }
 
     private void DetectSwipe()
     {
-        // Tính khoảng cách từ điểm Bắt đầu đến điểm Kết thúc
         Vector2 swipeDelta = endTouchPosition - startTouchPosition;
 
-        // Kiểm tra xem quãng đường vuốt có đủ dài không (Lớn hơn ngưỡng minSwipeDistance)
         if (swipeDelta.magnitude >= minSwipeDistance)
         {
-            // Trị tuyệt đối để xem vuốt theo chiều Ngang hay chiều Dọc dài hơn
-            float xDistance = Mathf.Abs(swipeDelta.x);
-            float yDistance = Mathf.Abs(swipeDelta.y);
+            // Normalize để đưa vector về độ dài bằng 1, giúp so sánh chính xác
+            swipeDelta.Normalize();
 
-            if (xDistance > yDistance)
+            // 1. Định nghĩa 4 hướng vuốt chéo trên màn hình 2D
+            Vector2 upRight = new Vector2(1, 1).normalized;   // ↗
+            Vector2 upLeft = new Vector2(-1, 1).normalized;  // ↖
+            Vector2 downRight = new Vector2(1, -1).normalized;  // ↘
+            Vector2 downLeft = new Vector2(-1, -1).normalized; // ↙
+
+            // 2. Chấm điểm xem đường vuốt của người chơi giống hướng nào nhất
+            float scoreUR = Vector2.Dot(swipeDelta, upRight);
+            float scoreUL = Vector2.Dot(swipeDelta, upLeft);
+            float scoreDR = Vector2.Dot(swipeDelta, downRight);
+            float scoreDL = Vector2.Dot(swipeDelta, downLeft);
+
+            // 3. Tìm ra hướng có điểm số cao nhất (Người chơi muốn vuốt hướng đó)
+            float maxScore = Mathf.Max(scoreUR, Mathf.Max(scoreUL, Mathf.Max(scoreDR, scoreDL)));
+
+            // 4. Lập bản đồ (Mapping) từ 2D sang 3D
+            // LƯU Ý: Bạn có thể cần tráo đổi các Vector3.forward/back/left/right 
+            // ở dưới đây sao cho khớp với trục X, Z trong Scene của bạn!
+
+            if (maxScore == scoreUR) // Vuốt ↗ (Mũi tên đỏ của bạn)
             {
-                // VUỐT CHIỀU NGANG
-                if (swipeDelta.x > 0)
-                    ProcessMoving(player1, player2, Vector3.right); // Vuốt sang phải
-                else
-                    ProcessMoving(player1, player2, Vector3.left);  // Vuốt sang trái
+                ProcessMoving(player1, player2, Vector3.right); // Hoặc Vector3.right
             }
-            else
+            else if (maxScore == scoreUL) // Vuốt ↖
             {
-                // VUỐT CHIỀU DỌC
-                if (swipeDelta.y > 0)
-                    ProcessMoving(player1, player2, Vector3.forward); // Vuốt lên trên
-                else
-                    ProcessMoving(player1, player2, Vector3.back);    // Vuốt xuống dưới
+                ProcessMoving(player1, player2, Vector3.forward);    // Hoặc Vector3.forward
+            }
+            else if (maxScore == scoreDL) // Vuốt ↙
+            {
+                ProcessMoving(player1, player2, Vector3.left);    // Hoặc Vector3.left
+            }
+            else if (maxScore == scoreDR) // Vuốt ↘
+            {
+                ProcessMoving(player1, player2, Vector3.back);   // Hoặc Vector3.back
             }
         }
     }
@@ -152,8 +169,11 @@ public class PlayerMoving : MonoBehaviour
     {
         float elapsedTime = 0f;
         Debug.Log("Đang gọi tiếng đi bộ!");
-        AudioManager.instance.PlayMoving();
 
+        AudioManager.instance.PlayMoving();
+        // Ví dụ trong hàm nhận diện Input của bạn:
+        // Move(Vector2.up);
+        HapticManager.LightTaptic();
         while (elapsedTime < moveDuration)
         {
             // Lính gác chống lỗi bóng ma (Zombie Coroutine)
@@ -199,8 +219,6 @@ public class PlayerMoving : MonoBehaviour
         player.isMoved = false;
 
         var isWin = WinLoseManager.Instance.CheckWinCondition();
-        var levelInplay = PlayerPrefs.GetInt("LevelInPlay");
-        Debug.Log("Level IN play is" + levelInplay);
         if (isWin)
         {
             WinLoseManager.Instance.Win();
