@@ -45,12 +45,9 @@ public class LoadingScreen : MonoBehaviour
     }
     IEnumerator LoadGameInBackGround()
     {
-        currentLevel = PlayerPrefs.GetInt("LevelInPlay");
-        if (currentLevel == 0)
-        {
-            PlayerPrefs.SetInt("LevelInPlay", 1);
 
-        }
+        currentLevel = 1;
+
         asyncLoad = SceneManager.LoadSceneAsync(currentLevel);
         asyncLoad.allowSceneActivation = false;
 

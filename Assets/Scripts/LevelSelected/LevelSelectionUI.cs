@@ -12,7 +12,7 @@ public class LevelSelectionUI : MonoBehaviour
 
     public int totalLevel;
     // Start is called before the first frame update
-    void OnEnable()
+    void Start()
     {
         GenerateLevels();
     }
@@ -23,8 +23,8 @@ public class LevelSelectionUI : MonoBehaviour
             Destroy(child.gameObject);
         }
 
+        int levelInPlay = SaveManager.Instance.gameData.CurrentLevel;
 
-        int levelInPlay = PlayerPrefs.GetInt("LevelInPlay");
         if (levelInPlay == 0)
         {
             levelInPlay = 1;
@@ -40,7 +40,7 @@ public class LevelSelectionUI : MonoBehaviour
             LevelSeleceted levelSeleceted = newButton.GetComponent<LevelSeleceted>();
 
             // thêm số vào trong nút, nếu người chơi chưa đến màn đó, khóa nó lại.
-            var highestLevel = PlayerPrefs.GetInt("HighestLevel");
+            var highestLevel = SaveManager.Instance.gameData.HighestLevel;
             if (highestLevel == 0)
             {
                 highestLevel = 1;

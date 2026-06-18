@@ -40,6 +40,7 @@ public class PlayerManager : MonoBehaviour
 
         if (isBlock || isBlockByPlayer)
         {
+            HapticManager.HeavyTaptic();
             finalTarget = currentPosition;
             return true;
         }

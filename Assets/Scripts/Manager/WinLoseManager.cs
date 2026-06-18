@@ -65,17 +65,18 @@ public class WinLoseManager : MonoBehaviour
         AudioManager.instance.PlayWin();
         Time.timeScale = 0f;
 
-        var currentLevel = PlayerPrefs.GetInt("LevelInPlay");
-        var highestLevel = PlayerPrefs.GetInt("HighestLevel");
+        var currentLevel = SaveManager.Instance.gameData.CurrentLevel;
+        var highestLevel = SaveManager.Instance.gameData.HighestLevel;
 
-        PlayerPrefs.SetInt("LevelInPlay", currentLevel + 1);
+        SaveManager.Instance.gameData.CurrentLevel = currentLevel + 1;
 
         if (currentLevel + 1 > highestLevel)
         {
-            PlayerPrefs.SetInt("HighestLevel", currentLevel + 1);
+            SaveManager.Instance.gameData.HighestLevel = currentLevel + 1;
+
 
         }
-
+        SaveManager.Instance.SaveGame();
 
 
         winUI.SetActive(true);
