@@ -12,57 +12,54 @@ public class LevelSelectionUI : MonoBehaviour
 
     public int totalLevel;
     // Start is called before the first frame update
-    void Start()
+    void OnEnable()
     {
         GenerateLevels();
     }
     void GenerateLevels()
     {
-        foreach (Transform child in viewContent)
-        {
-            Destroy(child.gameObject);
-        }
-
         int levelInPlay = SaveManager.Instance.gameData.CurrentLevel;
+        int highestLevel = SaveManager.Instance.gameData.HighestLevel;
 
-        if (levelInPlay == 0)
-        {
-            levelInPlay = 1;
-        }
+        if (levelInPlay == 0) levelInPlay = 1;
+        if (highestLevel == 0) highestLevel = 1;
+
+        // 2. Vòng lặp thần thánh: Vừa đẻ nút, vừa xài lại nút cũ
         for (int i = 1; i <= totalLevel; i++)
         {
-            string hexColor = "";
-            bool isPlayed = true;
-            GameObject newButton = Instantiate(levelButonPrefab, viewContent);
-            // Ép Scale về 1 để tránh lỗi nút bị to ra/nhỏ đi bất thường của Unity UI
-            newButton.transform.localScale = Vector3.one;
+            LevelSeleceted levelSelected;
 
-            LevelSeleceted levelSeleceted = newButton.GetComponent<LevelSeleceted>();
-
-            // thêm số vào trong nút, nếu người chơi chưa đến màn đó, khóa nó lại.
-            var highestLevel = SaveManager.Instance.gameData.HighestLevel;
-            if (highestLevel == 0)
+            // KIỂM TRA TRÍ NHỚ: Trong bảng đã có sẵn cái nút thứ i chưa?
+            if (i - 1 < viewContent.childCount)
             {
-                highestLevel = 1;
-            }
-            if (i > highestLevel)
-            {
-                isPlayed = false;
+                // CÓ SẴN RỒI: Tái sử dụng luôn, tuyệt đối không Instantiate
+                levelSelected = viewContent.GetChild(i - 1).GetComponent<LevelSeleceted>();
             }
             else
             {
-                isPlayed = true;
-                hexColor = "#FF842D";
+                // CHƯA CÓ: Mới Instantiate để bù vào
+                GameObject newButton = Instantiate(levelButonPrefab, viewContent);
+                newButton.transform.localScale = Vector3.one;
+                levelSelected = newButton.GetComponent<LevelSeleceted>();
             }
 
-            // điều chỉnh màu của button, nếu như hiện tại thì là màu xanh, đã chơi là màu cam.
+            // 3. Logic phân màu và trạng thái của bạn (đã được tinh gọn)
+            string hexColor = ""; // Mặc định là chuỗi rỗng (dành cho nút bị Khóa)
+            bool isPlayed = (i <= highestLevel); // Cứ nhỏ hơn hoặc bằng HighestLevel là được chơi
+
             if (i == levelInPlay)
             {
-                isPlayed = true;
-                hexColor = "#4E8C61";
+                hexColor = "#4E8C61"; // Màu xanh - Đang chơi
             }
-            levelSeleceted.SetupButton(i, isPlayed, hexColor);
+            else if (isPlayed)
+            {
+                hexColor = "#FF842D"; // Màu cam - Đã chơi qua
+            }
+
+            // 4. Bơm dữ liệu mới vào cái nút
+            levelSelected.SetupButton(i, isPlayed, hexColor);
         }
     }
+
 
 }

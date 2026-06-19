@@ -18,6 +18,10 @@ public class LevelManager : MonoBehaviour
     {
         Instance = this;
     }
+    void Start()
+    {
+        levelSelectedUI.SetActive(true);
+    }
 
 
     // Update is called once per frame.

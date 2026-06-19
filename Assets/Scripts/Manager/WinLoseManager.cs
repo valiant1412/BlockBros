@@ -19,9 +19,13 @@ public class WinLoseManager : MonoBehaviour
     [SerializeField] private GameObject loseUI;
 
     public bool isGameEnded = false;
+    public bool isGameWon = false;
     void Start()
     {
         Instance = this;
+        isGameEnded = false;
+        isGameWon = false;
+
     }
     public bool CheckWinCondition()
     {
@@ -60,6 +64,7 @@ public class WinLoseManager : MonoBehaviour
     {
         if (isGameEnded) return;
         isGameEnded = true;
+        isGameWon = true; // 2. THÊM DÒNG NÀY ĐỂ BÁO LÀ ĐÃ THẮNG
 
         gameObject.SetActive(true);
         AudioManager.instance.PlayWin();
@@ -68,16 +73,12 @@ public class WinLoseManager : MonoBehaviour
         var currentLevel = SaveManager.Instance.gameData.CurrentLevel;
         var highestLevel = SaveManager.Instance.gameData.HighestLevel;
 
-        SaveManager.Instance.gameData.CurrentLevel = currentLevel + 1;
-
-        if (currentLevel + 1 > highestLevel)
+        // Chỉ cập nhật HighestLevel (Mở khóa màn mới)
+        if (currentLevel >= highestLevel)
         {
             SaveManager.Instance.gameData.HighestLevel = currentLevel + 1;
-
-
+            SaveManager.Instance.SaveGame();
         }
-        SaveManager.Instance.SaveGame();
-
 
         winUI.SetActive(true);
     }

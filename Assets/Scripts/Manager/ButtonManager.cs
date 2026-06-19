@@ -3,29 +3,72 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+[System.Serializable] // Bắt buộc có dòng này để nó hiện ra ngoài Inspector
+public struct UIData
+{
+    public string panelName;      // Tên gọi nhớ (Ví dụ: "Pause", "Setting", "Shop", "Win")
+    public GameObject panelObject; // Cục UI tương ứng kéo vào đây
+}
 public class ButtonManager : MonoBehaviour
 {
+    [Header("Kho chứa toàn bộ giao diện")]
+    public List<UIData> uiDatabase;
+
+    //  sửa khi mở setting hoặc pause
+    public void OpenPanel(string targetName)
+    {
+        foreach (var data in uiDatabase)
+        {
+            if (data.panelName == targetName)
+            {
+                data.panelObject.SetActive(true);
+            }
+            else
+            {
+                data.panelObject.SetActive(false);
+            }
+        }
+        if (targetName == "Pause" || targetName == "Setting" || targetName == "Win" || targetName == "Lose")
+        {
+            Time.timeScale = 0f;
+        }
+        AudioManager.instance.PlayClickSFX();
+        HapticManager.LightTaptic();
+    }
+
+    public void ClosePanel()
+    {
+        foreach (var data in uiDatabase)
+        {
+            if (data.panelObject != null) data.panelObject.SetActive(false);
+        }
+        Time.timeScale = 1f; // Trả lại thời gian thực
+
+        AudioManager.instance.PlayClickSFX();
+        HapticManager.LightTaptic();
+    }
     // Start is called before the first frame update
-    [SerializeField] private GameObject Pop_up;
-    private bool isPause = false;
+    // private bool isPause = false;
 
     public void RestartBtn()
     {
-        var currentLevel = SaveManager.Instance.gameData.CurrentLevel;
         AudioManager.instance.PlayClickSFX();
         HapticManager.LightTaptic();
-        // 1. CHẶN ĐỨNG BÓNG MA: Báo cho Giám đốc di chuyển dọn dẹp Coroutine
-        if (PlayerMoving.Instance != null)
+
+        if (PlayerMoving.Instance != null) { PlayerMoving.Instance.ResetMovement(); }
+
+        var currentLevel = SaveManager.Instance.gameData.CurrentLevel;
+
+        // 🧹 DỌN DẸP CHIẾN TRƯỜNG: Bắt buộc phải hạ cờ trước khi chơi lại!
+        if (WinLoseManager.Instance != null)
         {
-            PlayerMoving.Instance.ResetMovement();
+            WinLoseManager.Instance.isGameWon = false;
+            WinLoseManager.Instance.isGameEnded = false;
         }
 
         Time.timeScale = 1f;
-
-        Time.timeScale = 1f;
+        ClosePanel();
         LevelManager.Instance.StartLevel(currentLevel.ToString());
-        Pop_up.SetActive(false);
-        isPause = false;
     }
     public void StartBtn()
     {
@@ -41,84 +84,95 @@ public class ButtonManager : MonoBehaviour
             SceneManager.LoadScene((currentLevel).ToString());
         }
     }
-    public void PauseBtn()
-    {
-        if (isPause) return;
-        if (Pop_up == null) return;
-        Pop_up.SetActive(true);
-        isPause = true;
+    // public void PauseBtn()
+    // {
+    //     if (isPause) return;
+    //     if (Pop_up == null) return;
+    //     Pop_up.SetActive(true);
+    //     isPause = true;
 
-        AudioManager.instance.PlayClickSFX();
-        HapticManager.LightTaptic();
+    //     AudioManager.instance.PlayClickSFX();
+    //     HapticManager.LightTaptic();
 
-        Time.timeScale = 0f;
+    //     Time.timeScale = 0f;
 
-    }
+    // }
     public void ResumeBtn()
     {
 
         Debug.Log("Nút Resume ĐÃ ĐƯỢC BẤM!"); // Thêm dòng này
-        if (Pop_up == null) return;
+
         AudioManager.instance.PlayClickSFX();
         HapticManager.LightTaptic();
 
         Time.timeScale = 1f;
-        Pop_up.SetActive(false);
-        isPause = false;
-    }
-    public void HomeBtn()
-    {
-        SceneManager.LoadScene("StartScene");
-        AudioManager.instance.PlayClickSFX();
-        HapticManager.LightTaptic();
-
-        Time.timeScale = 1f;
+        ClosePanel();
     }
     public void LevelBtn()
     {
         AudioManager.instance.PlayClickSFX();
         HapticManager.LightTaptic();
-        // enable lại bảng
-        Pop_up.SetActive(false);
+        Time.timeScale = 1f;
 
-        // 2. Báo cho Giám đốc dọn dẹp Map và mở Menu
+        // Nếu đi ra từ bảng Win -> Cộng Level
+        if (WinLoseManager.Instance != null && WinLoseManager.Instance.isGameWon)
+        {
+            var currentLevel = SaveManager.Instance.gameData.CurrentLevel;
+            SaveManager.Instance.gameData.CurrentLevel = currentLevel + 1;
+            SaveManager.Instance.SaveGame();
+        }
+
+        // 🧹 DỌN DẸP CHIẾN TRƯỜNG: Dù là thắng hay đang Pause thoát ra, ra Menu là phải hạ hết cờ!
+        if (WinLoseManager.Instance != null)
+        {
+            WinLoseManager.Instance.isGameWon = false;
+            WinLoseManager.Instance.isGameEnded = false;
+        }
+
+        ClosePanel();
+
         if (LevelManager.Instance != null)
         {
             LevelManager.Instance.ReturnToMenu();
         }
-        Time.timeScale = 1f;
-        isPause = false;
     }
     public void NextBtn()
     {
-        var currentLevel = SaveManager.Instance.gameData.CurrentLevel;
-        LevelManager.Instance.StartLevel(currentLevel.ToString());
 
-        AudioManager.instance.PlayClickSFX();
         HapticManager.LightTaptic();
+
+        var currentLevel = SaveManager.Instance.gameData.CurrentLevel;
+
+        // CỘNG 1 LÊN LEVEL MỚI
+        SaveManager.Instance.gameData.CurrentLevel = currentLevel + 1;
+        SaveManager.Instance.SaveGame();
+
+        // 🧹 DỌN DẸP CHIẾN TRƯỜNG: Bắt buộc hạ cờ trước khi sang màn mới!
         if (WinLoseManager.Instance != null)
         {
-            WinLoseManager.Instance.SetActiveToWinUIToFalse();
+            WinLoseManager.Instance.isGameWon = false;
+            WinLoseManager.Instance.isGameEnded = false;
         }
 
         Time.timeScale = 1f;
-        isPause = false;
+        ClosePanel();
+        LevelManager.Instance.StartLevel((currentLevel + 1).ToString());
     }
-    public void ExitPopUPBtn()
-    {
-        Pop_up.SetActive(false);
-        if (isPause) return;
-        Time.timeScale = 1f;
-    }
-    public void SettingBtn()
-    {
-        if (!isPause) isPause = true;
-        if (Pop_up == null) return;
-        Pop_up.SetActive(true);
+    // public void ExitPopUPBtn()
+    // {
+    //     Pop_up.SetActive(false);
+    //     if (isPause) return;
+    //     Time.timeScale = 1f;
+    // }
+    // public void SettingBtn()
+    // {
+    //     if (!isPause) isPause = true;
+    //     if (Pop_up == null) return;
+    //     Pop_up.SetActive(true);
 
-        AudioManager.instance.PlayClickSFX();
-        HapticManager.LightTaptic();
-        if (isPause) return;
-        Time.timeScale = 0f;
-    }
+    //     AudioManager.instance.PlayClickSFX();
+    //     HapticManager.LightTaptic();
+    //     if (isPause) return;
+    //     Time.timeScale = 0f;
+    // }
 }
