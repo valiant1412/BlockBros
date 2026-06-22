@@ -7,16 +7,7 @@ public class Coin : MonoBehaviour
     // Start is called before the first frame update
     public Vector3 rotationSpeed = new Vector3(0f, 100f, 0f); // Mặc định xoay quanh trục Y với tốc độ 100
 
-    void OnTriggerEnter(Collider other)
-    {
-        if (other.gameObject.CompareTag("Player"))
-        {
-            gameObject.SetActive(false);
-            AudioManager.instance.PlayCoin();
-            ScoreManager.Instance.AddScore();
-            HapticManager.LightTaptic();
-        }
-    }
+
     void Update()
     {
         // Thực hiện xoay vật thể mỗi khung hình (frame)

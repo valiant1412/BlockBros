@@ -7,12 +7,10 @@ public class GameData
 {
     public int HighestLevel;
     public int CurrentLevel;
-
     public bool isMuted;
     public bool isSFXOff;
-
     public bool isHapticOff;
-
+    public int totalGold;
     // Hàm khởi tạo dữ liệu mặc định cho người chơi mới
     public GameData()
     {
@@ -20,6 +18,7 @@ public class GameData
         CurrentLevel = 1;
         isMuted = false;
         isSFXOff = false;
-        isHapticOff = false; // BẮT BUỘC PHẢI THÊM DÒNG NÀY
+        isHapticOff = false;
+        totalGold = 0;// BẮT BUỘC PHẢI THÊM DÒNG NÀY
     }
 }
