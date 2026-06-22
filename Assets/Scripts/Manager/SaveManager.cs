@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Unity.VisualScripting;
 using UnityEngine;
+using System;
 
 public class SaveManager : MonoBehaviour
 {
@@ -9,6 +11,7 @@ public class SaveManager : MonoBehaviour
     // Start is called before the first frame update
     public GameData gameData;
 
+    public static Action OnGoldChanged;
     private string saveFilePath;
 
     void Awake()

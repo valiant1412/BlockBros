@@ -11,6 +11,7 @@ public class ClearSaveData
         // 1. Tìm đường dẫn đến két sắt
         string saveFilePath = Application.persistentDataPath + "/DinoBrosSave.json";
 
+
         // 2. Kiểm tra xem két sắt có tồn tại không
         if (File.Exists(saveFilePath))
         {

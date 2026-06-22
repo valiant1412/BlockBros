@@ -81,6 +81,7 @@ public class WinLoseManager : MonoBehaviour
         }
 
         winUI.SetActive(true);
+        EconomyManager.Instance.AddMoney(100);
     }
     public void SetupInput(Player player1, Player player2, Transform winzone1, Transform winzone2)
     {
