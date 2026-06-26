@@ -29,10 +29,15 @@ public class EconomyManager : MonoBehaviour
         OnGoldChanged?.Invoke();
 
     }
-    public void BuySkin(int price)
+    public void BuySkin(int price, out bool isAbleToBuy)
     {
         int totalGold = SaveManager.Instance.gameData.totalGold;
-        if (!ValidateMoney(price)) return;
+        isAbleToBuy = ValidateMoney(price);
+        if (!isAbleToBuy)
+        {
+            isAbleToBuy = ValidateMoney(price);
+            return;
+        }
         else
         {
             totalGold -= price;
