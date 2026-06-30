@@ -17,7 +17,6 @@ public class LoadingScreen : MonoBehaviour
 
     [SerializeField] private GameObject sceneTransitionObject;
 
-    private bool isLoadDone = false;
 
     [Header("Tên Màn Chơi Chính")]
 

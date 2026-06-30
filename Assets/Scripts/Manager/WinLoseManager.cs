@@ -5,7 +5,6 @@ using UnityEngine;
 public class WinLoseManager : MonoBehaviour
 {
     public static WinLoseManager Instance;
-    private float playerArrived = 0;
     [Header("Nhân vật chơi")]
     [SerializeField] private Player player1;
     [SerializeField] private Player player2;

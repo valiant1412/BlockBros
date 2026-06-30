@@ -1,6 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
-using CandyCoded.HapticFeedback;
 using UnityEngine;
 
 public class PlayerMoving : MonoBehaviour
@@ -26,9 +24,6 @@ public class PlayerMoving : MonoBehaviour
     // CHỐT KHÓA: Đừng quên cái này để tránh lỗi spam phím bay lên trời
     public float moveDuration = 0.2f;
 
-    private bool isMoving = false;
-
-    private bool isGameOver = false;
 
     [SerializeField] private int maxDistance;
 

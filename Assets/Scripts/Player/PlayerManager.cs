@@ -18,8 +18,6 @@ public class PlayerManager : MonoBehaviour
 
     public float moveDuration = 0.2f;
 
-    private bool isMoving = false;
-
     private bool isGameOver = false;
 
     [SerializeField] private int maxDistance;
