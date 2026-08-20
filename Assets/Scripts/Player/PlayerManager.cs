@@ -75,8 +75,8 @@ public class PlayerManager : MonoBehaviour
             finalTarget.y += distanceToBottom;
             if (Physics.Raycast(rayCastingPoint, Vector3.down, out RaycastHit newHit, 20f, playerLayer))
             {
-                var besidePlayer = newHit.collider.gameObject.GetComponent<Player>();
-                if (besidePlayer.isBlockByObject)
+                var besidePlayer = newHit.collider.GetComponentInParent<Player>();
+                if (besidePlayer != null && besidePlayer.isBlockByObject)
                 {
                     return true;
                 }
@@ -94,4 +94,5 @@ public class PlayerManager : MonoBehaviour
         // Chỉ khi mọi thứ ok mới gọi Coroutine di chuyển
         return false;
     }
+
 }

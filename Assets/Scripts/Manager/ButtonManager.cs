@@ -31,6 +31,7 @@ public class ButtonManager : MonoBehaviour
         if (targetName == "Pause" || targetName == "Setting" || targetName == "Win" || targetName == "Lose")
         {
             Time.timeScale = 0f;
+            if (GameManager.Instance != null) GameManager.Instance.SetGameplayActive(false);
         }
         AudioManager.instance.PlayClickSFX();
         HapticManager.LightTaptic();
@@ -46,6 +47,15 @@ public class ButtonManager : MonoBehaviour
 
         AudioManager.instance.PlayClickSFX();
         HapticManager.LightTaptic();
+    }
+
+    public void PlayBtn()
+    {
+        ClosePanel();
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SetGameplayActive(true);
+        }
     }
     // Start is called before the first frame update
     // private bool isPause = false;
@@ -69,6 +79,29 @@ public class ButtonManager : MonoBehaviour
         Time.timeScale = 1f;
         ClosePanel();
         LevelManager.Instance.StartLevel(currentLevel.ToString());
+
+    }
+    public void HomeBtn(GameObject HomePage)
+    {
+        AudioManager.instance.PlayClickSFX();
+        HapticManager.LightTaptic();
+
+        if (PlayerMoving.Instance != null) { PlayerMoving.Instance.ResetMovement(); }
+
+        var currentLevel = SaveManager.Instance.gameData.CurrentLevel;
+
+        // 🧹 DỌN DẸP CHIẾN TRƯỜNG: Bắt buộc phải hạ cờ trước khi chơi lại!
+        if (WinLoseManager.Instance != null)
+        {
+            WinLoseManager.Instance.isGameWon = false;
+            WinLoseManager.Instance.isGameEnded = false;
+        }
+
+        Time.timeScale = 1f;
+        ClosePanel();
+        LevelManager.Instance.StartLevel(currentLevel.ToString());
+        HomePage.SetActive(true);
+        GameManager.Instance.SetGameplayActive(true);
     }
     public void StartBtn()
     {
@@ -107,6 +140,7 @@ public class ButtonManager : MonoBehaviour
 
         Time.timeScale = 1f;
         ClosePanel();
+        if (GameManager.Instance != null) GameManager.Instance.SetGameplayActive(true);
     }
     public void LevelBtn()
     {
@@ -118,8 +152,12 @@ public class ButtonManager : MonoBehaviour
         if (WinLoseManager.Instance != null && WinLoseManager.Instance.isGameWon)
         {
             var currentLevel = SaveManager.Instance.gameData.CurrentLevel;
-            SaveManager.Instance.gameData.CurrentLevel = currentLevel + 1;
-            SaveManager.Instance.SaveGame();
+            var nextLevel = currentLevel + 1;
+            if (LevelManager.Instance != null && LevelManager.Instance.HasLevel(nextLevel))
+            {
+                SaveManager.Instance.gameData.CurrentLevel = nextLevel;
+                SaveManager.Instance.SaveGame();
+            }
         }
 
         // 🧹 DỌN DẸP CHIẾN TRƯỜNG: Dù là thắng hay đang Pause thoát ra, ra Menu là phải hạ hết cờ!
@@ -143,20 +181,11 @@ public class ButtonManager : MonoBehaviour
 
         var currentLevel = SaveManager.Instance.gameData.CurrentLevel;
 
-        // CỘNG 1 LÊN LEVEL MỚI
-        SaveManager.Instance.gameData.CurrentLevel = currentLevel + 1;
-        SaveManager.Instance.SaveGame();
-
-        // 🧹 DỌN DẸP CHIẾN TRƯỜNG: Bắt buộc hạ cờ trước khi sang màn mới!
-        if (WinLoseManager.Instance != null)
-        {
-            WinLoseManager.Instance.isGameWon = false;
-            WinLoseManager.Instance.isGameEnded = false;
-        }
+        if (LevelManager.Instance == null ||
+            !LevelManager.Instance.TryStartLevel((currentLevel + 1).ToString())) return;
 
         Time.timeScale = 1f;
         ClosePanel();
-        LevelManager.Instance.StartLevel((currentLevel + 1).ToString());
     }
     // public void ExitPopUPBtn()
     // {

@@ -4,11 +4,13 @@
 TagManager:
   serializedVersion: 2
   tags:
+  - Player
   - Player01
   - Player02
   - Fence
   - Stair
   - Trap
+  - Winzone
   layers:
   - Default
   - TransparentFX

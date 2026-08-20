@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using Unity.VisualScripting;
 using UnityEngine;
 using System;
 
@@ -28,10 +27,22 @@ public class SaveManager : MonoBehaviour
     {
         if (File.Exists(saveFilePath))
         {
-            string json = File.ReadAllText(saveFilePath);
-            gameData = JsonUtility.FromJson<GameData>(json);
+            try
+            {
+                string json = File.ReadAllText(saveFilePath);
+                gameData = JsonUtility.FromJson<GameData>(json);
 
-            Debug.Log("📂 Đã tải dữ liệu thành công! Level cao nhất: " + gameData.HighestLevel);
+                if (gameData == null) throw new InvalidDataException("Save data is empty or invalid.");
+                if (gameData.RepairMissingData()) SaveGame();
+
+                Debug.Log("📂 Đã tải dữ liệu thành công! Level cao nhất: " + gameData.HighestLevel);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("Could not load save data. A new save will be created. " + exception.Message);
+                gameData = new GameData();
+                SaveGame();
+            }
         }
         else
         {
@@ -43,6 +54,8 @@ public class SaveManager : MonoBehaviour
 
     public void SaveGame()
     {
+        if (gameData == null) gameData = new GameData();
+        gameData.RepairMissingData();
         string json = JsonUtility.ToJson(gameData, true);
 
         // 2. Ghi đè chuỗi văn bản đó vào ổ cứng điện thoại

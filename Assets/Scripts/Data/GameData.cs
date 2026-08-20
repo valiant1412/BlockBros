@@ -13,6 +13,9 @@ public class PlayerInventory
 [System.Serializable]
 public class GameData
 {
+    private const int PlayerCount = 2;
+    private const string DefaultSkinId = "default_skin";
+
     [Header("Tiến trình chơi")]
     public int HighestLevel;
     public int CurrentLevel;
@@ -47,5 +50,86 @@ public class GameData
             new PlayerInventory(), // Ngăn kéo của Player 1 (Index 0)
             new PlayerInventory()  // Ngăn kéo của Player 2 (Index 1)
         };
+    }
+
+    public bool RepairMissingData()
+    {
+        bool wasRepaired = false;
+
+        if (HighestLevel < 1)
+        {
+            HighestLevel = 1;
+            wasRepaired = true;
+        }
+
+        if (CurrentLevel < 1)
+        {
+            CurrentLevel = 1;
+            wasRepaired = true;
+        }
+
+        if (HighestLevel < CurrentLevel)
+        {
+            HighestLevel = CurrentLevel;
+            wasRepaired = true;
+        }
+
+        if (currentSkin == null || currentSkin.Length != PlayerCount)
+        {
+            string[] repairedSkins = { DefaultSkinId, DefaultSkinId };
+            if (currentSkin != null)
+            {
+                for (int i = 0; i < Mathf.Min(currentSkin.Length, PlayerCount); i++)
+                {
+                    if (!string.IsNullOrEmpty(currentSkin[i])) repairedSkins[i] = currentSkin[i];
+                }
+            }
+
+            currentSkin = repairedSkins;
+            wasRepaired = true;
+        }
+
+        for (int i = 0; i < PlayerCount; i++)
+        {
+            if (!string.IsNullOrEmpty(currentSkin[i])) continue;
+            currentSkin[i] = DefaultSkinId;
+            wasRepaired = true;
+        }
+
+        PlayerInventory[] repairedInventories = new PlayerInventory[PlayerCount];
+        for (int i = 0; i < PlayerCount; i++)
+        {
+            PlayerInventory inventory = Inventories != null && i < Inventories.Length
+                ? Inventories[i]
+                : null;
+
+            if (inventory == null)
+            {
+                inventory = new PlayerInventory();
+                wasRepaired = true;
+            }
+
+            if (inventory.OwnedSkins == null)
+            {
+                inventory.OwnedSkins = new List<string>();
+                wasRepaired = true;
+            }
+
+            if (!inventory.OwnedSkins.Contains(DefaultSkinId))
+            {
+                inventory.OwnedSkins.Add(DefaultSkinId);
+                wasRepaired = true;
+            }
+
+            repairedInventories[i] = inventory;
+        }
+
+        if (Inventories == null || Inventories.Length != PlayerCount)
+        {
+            wasRepaired = true;
+        }
+
+        Inventories = repairedInventories;
+        return wasRepaired;
     }
 }

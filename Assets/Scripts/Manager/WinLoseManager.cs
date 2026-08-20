@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,8 +9,6 @@ public class WinLoseManager : MonoBehaviour
     [SerializeField] private Player player2;
 
     [Header("Winzone")]
-    [SerializeField] private Transform winzone1;
-    [SerializeField] private Transform winzone2;
 
     [SerializeField] private GameObject winUI;
 
@@ -19,41 +16,48 @@ public class WinLoseManager : MonoBehaviour
 
     public bool isGameEnded = false;
     public bool isGameWon = false;
-    void Start()
+    private readonly HashSet<Player> exitedPlayers = new HashSet<Player>();
+    void Awake()
     {
         Instance = this;
+    }
+
+    void Start()
+    {
         isGameEnded = false;
         isGameWon = false;
 
     }
-    public bool CheckWinCondition()
+    public void ResetResult()
     {
-        Vector3 player1Position = new Vector3(player1.transform.position.x, 0f, player1.transform.position.z);
-        Vector3 player2Position = new Vector3(player2.transform.position.x, 0f, player2.transform.position.z);
+        isGameEnded = false;
+        isGameWon = false;
+        exitedPlayers.Clear();
+    }
 
-        // position of winzone
-        Vector3 winzone1Position = new Vector3(winzone1.transform.position.x, 0f, winzone1.transform.position.z);
-        Vector3 winzone2Position = new Vector3(winzone2.transform.position.x, 0f, winzone2.transform.position.z);
+    public void NotifyPlayerExited(Player player)
+    {
+        if (isGameEnded || player == null || !exitedPlayers.Add(player)) return;
 
-        //check distance
-        bool p1_is_on_zone1 = Vector3.Distance(player1Position, winzone1Position) < 0.1f;
-        bool p2_is_on_zone2 = Vector3.Distance(player2Position, winzone2Position) < 0.1f;
+        player.SetState(PlayerState.Exit);
+        player.gameObject.SetActive(false);
 
-        bool p1_is_on_zone2 = Vector3.Distance(player1Position, winzone2Position) < 0.1f;
-        bool p2_is_on_zone1 = Vector3.Distance(player2Position, winzone1Position) < 0.1f;
-
-        if ((p1_is_on_zone1 && p2_is_on_zone2) || (p1_is_on_zone2 && p2_is_on_zone1))
+        if (exitedPlayers.Count == 2)
         {
-            return true;
+            Win();
         }
-        return false;
     }
     public void Lose()
     {
         if (isGameEnded) return;
         isGameEnded = true;
-        gameObject.SetActive(true);
-        AudioManager.instance.PlayLose();
+        if (AudioManager.instance != null) AudioManager.instance.PlayLose();
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SetGameplayActive(false);
+            GameManager.Instance.RespawnPlayers();
+        }
 
         Time.timeScale = 0f;
 
@@ -65,29 +69,31 @@ public class WinLoseManager : MonoBehaviour
         isGameEnded = true;
         isGameWon = true; // 2. THÊM DÒNG NÀY ĐỂ BÁO LÀ ĐÃ THẮNG
 
-        gameObject.SetActive(true);
-        AudioManager.instance.PlayWin();
+        if (GameManager.Instance != null) GameManager.Instance.SetGameplayActive(false);
+        if (AudioManager.instance != null) AudioManager.instance.PlayWin();
         Time.timeScale = 0f;
 
         var currentLevel = SaveManager.Instance.gameData.CurrentLevel;
         var highestLevel = SaveManager.Instance.gameData.HighestLevel;
-
+        // if (player1.currentState == PlayerState.Exit)
+        // {
+        //     player1.SetState(PlayerState.Stand);
+        // }
+        // if (player2.currentState == PlayerState.Exit)
+        // {
+        //     player2.SetState(PlayerState.Stand);
+        // }
         // Chỉ cập nhật HighestLevel (Mở khóa màn mới)
-        if (currentLevel >= highestLevel)
+        int nextLevel = currentLevel + 1;
+        if (currentLevel >= highestLevel &&
+            (LevelManager.Instance == null || LevelManager.Instance.HasLevel(nextLevel)))
         {
-            SaveManager.Instance.gameData.HighestLevel = currentLevel + 1;
+            SaveManager.Instance.gameData.HighestLevel = nextLevel;
             SaveManager.Instance.SaveGame();
         }
 
         winUI.SetActive(true);
-        EconomyManager.Instance.AddMoney(100);
-    }
-    public void SetupInput(Player player1, Player player2, Transform winzone1, Transform winzone2)
-    {
-        this.player1 = player1;
-        this.player2 = player2;
-        this.winzone1 = winzone1;
-        this.winzone2 = winzone2;
+        if (EconomyManager.Instance != null) EconomyManager.Instance.AddMoney(100);
     }
 
     public void SetActiveToWinUIToFalse()

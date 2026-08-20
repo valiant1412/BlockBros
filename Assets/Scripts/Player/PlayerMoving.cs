@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class PlayerMoving : MonoBehaviour
 {
@@ -7,6 +8,7 @@ public class PlayerMoving : MonoBehaviour
     [Header("Nhân vật game")]
     [SerializeField] private Player player1;
     [SerializeField] private Player player2;
+
     [Header("Layer game")]
 
     // Đã đổi tên để nhắc nhở: Tích chọn CẢ Ground và Stair ngoài Inspector vào ô này!
@@ -24,6 +26,7 @@ public class PlayerMoving : MonoBehaviour
     // CHỐT KHÓA: Đừng quên cái này để tránh lỗi spam phím bay lên trời
     public float moveDuration = 0.2f;
 
+    public float rotateSpeed = 2f;
 
     [SerializeField] private int maxDistance;
 
@@ -32,6 +35,10 @@ public class PlayerMoving : MonoBehaviour
     private Vector2 startTouchPosition;
     private Vector2 endTouchPosition;
 
+    private float inputLockedUntil;
+    private bool isInputEnabled;
+    private bool isTrackingSwipe;
+
     void Awake()
     {
         Instance = this;
@@ -39,46 +46,41 @@ public class PlayerMoving : MonoBehaviour
 
     void Update()
     {
-        if (player1 == null || player2 == null) return;
+        if (!isInputEnabled || Time.unscaledTime < inputLockedUntil || !CanAcceptInput()) return;
 
-        // 1. Luôn ghi nhận thao tác chạm xuống để không bị rớt nhịp của người chơi
         if (Input.GetMouseButtonDown(0))
         {
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
             startTouchPosition = Input.mousePosition;
+            isTrackingSwipe = true;
         }
 
-        // 2. KHI NHẢ TAY RA CHUẨN BỊ DI CHUYỂN
         if (Input.GetMouseButtonUp(0))
         {
-            endTouchPosition = Input.mousePosition;
+            if (!isTrackingSwipe) return;
 
-            // LÍNH GÁC 1: Chỉ cho phép xử lý vuốt nếu cả 2 con đã đứng yên tĩnh
-            if (!player1.isMoved && !player2.isMoved)
-            {
-                DetectSwipe();
-            }
+            isTrackingSwipe = false;
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
+
+            endTouchPosition = Input.mousePosition;
+            DetectSwipe();
         }
 
-        // 3. KHI BẤM PHÍM TRÊN MÁY TÍNH
-        // LÍNH GÁC 2: Chỉ nhận phím khi đã đứng yên
-        if (!player1.isMoved && !player2.isMoved)
+        if (Input.GetKeyDown(KeyCode.A))
         {
-            if (Input.GetKeyDown(KeyCode.A))
-            {
-                ProcessMoving(player1, player2, Vector3.left);
-            }
-            else if (Input.GetKeyDown(KeyCode.D))
-            {
-                ProcessMoving(player1, player2, Vector3.right);
-            }
-            else if (Input.GetKeyDown(KeyCode.W))
-            {
-                ProcessMoving(player1, player2, Vector3.forward);
-            }
-            else if (Input.GetKeyDown(KeyCode.S))
-            {
-                ProcessMoving(player1, player2, Vector3.back);
-            }
+            ProcessMoving(player1, player2, Vector3.left);
+        }
+        else if (Input.GetKeyDown(KeyCode.D))
+        {
+            ProcessMoving(player1, player2, Vector3.right);
+        }
+        else if (Input.GetKeyDown(KeyCode.W))
+        {
+            ProcessMoving(player1, player2, Vector3.forward);
+        }
+        else if (Input.GetKeyDown(KeyCode.S))
+        {
+            ProcessMoving(player1, player2, Vector3.back);
         }
     }
 
@@ -130,18 +132,24 @@ public class PlayerMoving : MonoBehaviour
     }
     void ProcessMoving(Player player1, Player player2, Vector3 direction)
     {
+        if (!CanAcceptInput()) return;
+
+        bool isPlayer1Active = player1.gameObject.activeInHierarchy;
+        bool isPlayer2Active = player2.gameObject.activeInHierarchy;
         var currentPosition1 = player1.transform.position;
         var currentPosition2 = player2.transform.position;
 
-        bool isPlayer1Blocked = playerManagement.IsBlocked(player1, currentPosition1, direction, out Vector3 finalTarget1);
-        bool isPlayer2Blocked = playerManagement.IsBlocked(player2, currentPosition2, direction, out Vector3 finalTarget2);
+        Vector3 finalTarget1 = currentPosition1;
+        Vector3 finalTarget2 = currentPosition2;
+        bool isPlayer1Blocked = !isPlayer1Active || playerManagement.IsBlocked(player1, currentPosition1, direction, out finalTarget1);
+        bool isPlayer2Blocked = !isPlayer2Active || playerManagement.IsBlocked(player2, currentPosition2, direction, out finalTarget2);
 
         // 1. Xác định đích đến THỰC TẾ (Nếu bị chặn thì đích đến chính là chỗ đang đứng)
         Vector3 actualTarget1 = isPlayer1Blocked ? currentPosition1 : finalTarget1;
         Vector3 actualTarget2 = isPlayer2Blocked ? currentPosition2 : finalTarget2;
 
         // 2. Kiểm tra khoảng cách dây xích dựa trên đích đến thực tế
-        if (!IsDistanceAllowed(actualTarget1, actualTarget2))
+        if (isPlayer1Active && isPlayer2Active && !IsDistanceAllowed(actualTarget1, actualTarget2))
         {
             // HIỆU ỨNG HAY: Nếu đi xa quá đứt xích, cả 2 sẽ bị giật nảy tại chỗ
             actualTarget1 = currentPosition1;
@@ -151,11 +159,17 @@ public class PlayerMoving : MonoBehaviour
         }
 
         // 3. Khóa điều khiển và gọi Coroutine cho cả 2 con (kèm theo cờ báo hiệu bị chặn)
-        player1.isMoved = true;
-        player2.isMoved = true;
+        if (isPlayer1Active)
+        {
+            player1.SetState(PlayerState.Moving);
+            StartCoroutine(Move(player1, currentPosition1, direction, actualTarget1, isPlayer1Blocked));
+        }
 
-        StartCoroutine(Move(player1, currentPosition1, direction, actualTarget1, isPlayer1Blocked));
-        StartCoroutine(Move(player2, currentPosition2, direction, actualTarget2, isPlayer2Blocked));
+        if (isPlayer2Active)
+        {
+            player2.SetState(PlayerState.Moving);
+            StartCoroutine(Move(player2, currentPosition2, direction, actualTarget2, isPlayer2Blocked));
+        }
     }
 
 
@@ -164,7 +178,7 @@ public class PlayerMoving : MonoBehaviour
     {
         float elapsedTime = 0f;
         Debug.Log("Đang gọi tiếng đi bộ!");
-
+        player.FaceDirection(direction);
         AudioManager.instance.PlayMoving();
         // Ví dụ trong hàm nhận diện Input của bạn:
         // Move(Vector2.up);
@@ -172,7 +186,7 @@ public class PlayerMoving : MonoBehaviour
         while (elapsedTime < moveDuration)
         {
             // Lính gác chống lỗi bóng ma (Zombie Coroutine)
-            if (player1 == null || player2 == null) yield break;
+            if (player == null || !player.gameObject.activeInHierarchy) yield break;
 
             float percent = elapsedTime / moveDuration;
 
@@ -203,28 +217,25 @@ public class PlayerMoving : MonoBehaviour
             yield return null;
         }
 
+        // Thêm code để tránh việc đụng tường gây lệch.
+        // (Tránh lệch do Time.deltaTime không đều khiến percent != 1.0 chính xác)
+        player.transform.position = isBlocked ? currentPosition : finalTarget;
         // Xử lý luật chơi (Chỉ xét rơi vực nếu KHÔNG bị chặn)
         if (!isBlocked && finalTarget.y <= -20f)
         {
             WinLoseManager.Instance.Lose();
+            yield break;
         }
 
-        // CHỐT TỌA ĐỘ: Đảm bảo nhân vật đứng chuẩn xác giữa ô vuông sau khi xong animation
-        player.transform.position = isBlocked ? currentPosition : finalTarget;
-        player.isMoved = false;
-
-        var isWin = WinLoseManager.Instance.CheckWinCondition();
-        if (isWin)
+        if (player.gameObject.activeInHierarchy &&
+            (WinLoseManager.Instance == null || !WinLoseManager.Instance.isGameEnded))
         {
-            WinLoseManager.Instance.Win();
+            player.SetState(PlayerState.Stand);
         }
     }
 
-
     bool IsDistanceAllowed(Vector3 finalTarget1, Vector3 finalTarget2)
     {
-
-        if (finalTarget1 == null || finalTarget2 == null) return false;
 
         float distanceX = Mathf.Abs(finalTarget1.x - finalTarget2.x);
         float distanceZ = Mathf.Abs(finalTarget1.z - finalTarget2.z);
@@ -245,16 +256,46 @@ public class PlayerMoving : MonoBehaviour
         this.player1 = player1;
         this.player2 = player2;
 
-        Debug.Log("Đã gán nhân vật, có thể di chuyển được rồi");
     }
 
     public void ResetMovement()
     {
-        // 1. CHẶN ĐỨNG BÓNG MA: Dừng ngay lập tức Coroutine đang chạy dở
-        StopAllCoroutines();
-
-        // 3. Xé bỏ hồ sơ nhân viên cũ (Để Lính gác ở hàm Update chặn lại ngay)
+        StopMovement();
         player1 = null;
         player2 = null;
+    }
+
+    public void StopMovement()
+    {
+        StopAllCoroutines();
+        isTrackingSwipe = false;
+        startTouchPosition = Vector2.zero;
+        endTouchPosition = Vector2.zero;
+    }
+
+    public void SetInputEnabled(bool enabled)
+    {
+        isInputEnabled = enabled;
+        isTrackingSwipe = false;
+        startTouchPosition = Vector2.zero;
+        endTouchPosition = Vector2.zero;
+    }
+
+    private bool CanAcceptInput()
+    {
+        if (player1 == null || player2 == null) return false;
+
+        bool player1Ready = !player1.gameObject.activeInHierarchy || player1.currentState == PlayerState.Stand;
+        bool player2Ready = !player2.gameObject.activeInHierarchy || player2.currentState == PlayerState.Stand;
+        return player1Ready && player2Ready &&
+            (player1.gameObject.activeInHierarchy || player2.gameObject.activeInHierarchy);
+    }
+
+    public void LockInputFor(float seconds)
+    {
+        inputLockedUntil = Time.unscaledTime + seconds;
+        isTrackingSwipe = false;
+        startTouchPosition = Vector2.zero;
+        endTouchPosition = Vector2.zero;
     }
 }

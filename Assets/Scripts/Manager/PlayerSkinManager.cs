@@ -6,13 +6,18 @@ using UnityEngine;
 
 public class PlayerSkinManager : MonoBehaviour
 {
-    [Header("Cấu hình")]
+    [Header("Cáº¥u hÃ¬nh")]
     [SerializeField] private int playerIndex;
     [SerializeField] private Renderer playerRenderer;
     [SerializeField] private SkinDatabaseSO skinDatabase;
 
     void Awake()
     {
+        if (playerRenderer == null)
+        {
+            playerRenderer = GetComponentInChildren<Renderer>(true);
+        }
+
         LoadAndApplyPlayerSkin();
     }
     void OnEnable()
