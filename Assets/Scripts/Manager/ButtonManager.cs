@@ -83,25 +83,24 @@ public class ButtonManager : MonoBehaviour
     }
     public void HomeBtn(GameObject HomePage)
     {
+
         AudioManager.instance.PlayClickSFX();
         HapticManager.LightTaptic();
 
-        if (PlayerMoving.Instance != null) { PlayerMoving.Instance.ResetMovement(); }
-
-        var currentLevel = SaveManager.Instance.gameData.CurrentLevel;
-
-        // 🧹 DỌN DẸP CHIẾN TRƯỜNG: Bắt buộc phải hạ cờ trước khi chơi lại!
-        if (WinLoseManager.Instance != null)
-        {
-            WinLoseManager.Instance.isGameWon = false;
-            WinLoseManager.Instance.isGameEnded = false;
-        }
-
         Time.timeScale = 1f;
         ClosePanel();
-        LevelManager.Instance.StartLevel(currentLevel.ToString());
+
+        if (WinLoseManager.Instance != null)
+        {
+            WinLoseManager.Instance.ResetResult();
+        }
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SetGameplayActive(false);
+        }
         HomePage.SetActive(true);
-        GameManager.Instance.SetGameplayActive(true);
+
     }
     public void StartBtn()
     {
