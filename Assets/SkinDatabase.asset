@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 28377165ba523e940a9874b2b48f04c8, type: 3}
   m_Name: SkinDatabase
   m_EditorClassIdentifier: Assembly-CSharp::SkinDatabaseSO
   allSkins: []

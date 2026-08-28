@@ -30,7 +30,8 @@ public class PlayerMoving : MonoBehaviour
 
     [SerializeField] private int maxDistance;
 
-    public float minSwipeDistance = 50f;
+    [Header("Điều khiển vuốt")]
+    [SerializeField, Min(10f)] private float minSwipeDistance = 35f;
 
     private Vector2 startTouchPosition;
     private Vector2 endTouchPosition;
@@ -38,6 +39,9 @@ public class PlayerMoving : MonoBehaviour
     private float inputLockedUntil;
     private bool isInputEnabled;
     private bool isTrackingSwipe;
+    // Lưu một lượt vuốt kế tiếp trong lúc hai nhân vật đang chạy để thao tác nhanh không bị mất.
+    private bool hasBufferedMove;
+    private Vector3 bufferedMoveDirection;
 
     void Awake()
     {
@@ -46,24 +50,19 @@ public class PlayerMoving : MonoBehaviour
 
     void Update()
     {
-        if (!isInputEnabled || Time.unscaledTime < inputLockedUntil || !CanAcceptInput()) return;
+        if (!isInputEnabled || Time.unscaledTime < inputLockedUntil) return;
 
-        if (Input.GetMouseButtonDown(0))
+        // Vẫn ghi nhận swipe khi nhân vật đang di chuyển; hướng đó sẽ được chạy ngay khi cả hai đứng lại.
+        HandleSwipeInput();
+
+        if (!CanAcceptInput()) return;
+
+        if (hasBufferedMove)
         {
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
-            startTouchPosition = Input.mousePosition;
-            isTrackingSwipe = true;
-        }
-
-        if (Input.GetMouseButtonUp(0))
-        {
-            if (!isTrackingSwipe) return;
-
-            isTrackingSwipe = false;
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
-
-            endTouchPosition = Input.mousePosition;
-            DetectSwipe();
+            Vector3 direction = bufferedMoveDirection;
+            ClearBufferedMove();
+            ProcessMoving(player1, player2, direction);
+            return;
         }
 
         if (Input.GetKeyDown(KeyCode.A))
@@ -81,6 +80,31 @@ public class PlayerMoving : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.S))
         {
             ProcessMoving(player1, player2, Vector3.back);
+        }
+    }
+
+    private void HandleSwipeInput()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            // Chỉ chặn thao tác bắt đầu trên UI; nhả tay trên UI không được làm mất swipe đang theo dõi.
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            {
+                isTrackingSwipe = false;
+                return;
+            }
+
+            startTouchPosition = Input.mousePosition;
+            isTrackingSwipe = true;
+        }
+
+        if (Input.GetMouseButtonUp(0))
+        {
+            if (!isTrackingSwipe) return;
+
+            isTrackingSwipe = false;
+            endTouchPosition = Input.mousePosition;
+            DetectSwipe();
         }
     }
 
@@ -114,20 +138,38 @@ public class PlayerMoving : MonoBehaviour
 
             if (maxScore == scoreUR) // Vuốt ↗ (Mũi tên đỏ của bạn)
             {
-                ProcessMoving(player1, player2, Vector3.right); // Hoặc Vector3.right
+                RequestMove(Vector3.right); // Hoặc Vector3.right
             }
             else if (maxScore == scoreUL) // Vuốt ↖
             {
-                ProcessMoving(player1, player2, Vector3.forward);    // Hoặc Vector3.forward
+                RequestMove(Vector3.forward);    // Hoặc Vector3.forward
             }
             else if (maxScore == scoreDL) // Vuốt ↙
             {
-                ProcessMoving(player1, player2, Vector3.left);    // Hoặc Vector3.left
+                RequestMove(Vector3.left);    // Hoặc Vector3.left
             }
             else if (maxScore == scoreDR) // Vuốt ↘
             {
-                ProcessMoving(player1, player2, Vector3.back);   // Hoặc Vector3.back
+                RequestMove(Vector3.back);   // Hoặc Vector3.back
             }
+        }
+    }
+
+    private void RequestMove(Vector3 direction)
+    {
+        if (player1 == null || player2 == null) return;
+
+        if (CanAcceptInput())
+        {
+            ProcessMoving(player1, player2, direction);
+            return;
+        }
+
+        // Chỉ giữ một lệnh kế tiếp để game phản hồi nhanh nhưng không biến swipe spam thành hàng đợi dài.
+        if (!hasBufferedMove)
+        {
+            bufferedMoveDirection = direction;
+            hasBufferedMove = true;
         }
     }
     void ProcessMoving(Player player1, Player player2, Vector3 direction)
@@ -143,6 +185,18 @@ public class PlayerMoving : MonoBehaviour
         Vector3 finalTarget2 = currentPosition2;
         bool isPlayer1Blocked = !isPlayer1Active || playerManagement.IsBlocked(player1, currentPosition1, direction, out finalTarget1);
         bool isPlayer2Blocked = !isPlayer2Active || playerManagement.IsBlocked(player2, currentPosition2, direction, out finalTarget2);
+
+        ResolvePlayerDestinationCollision(
+            player1,
+            currentPosition1,
+            ref finalTarget1,
+            ref isPlayer1Blocked,
+            isPlayer1Active,
+            player2,
+            currentPosition2,
+            ref finalTarget2,
+            ref isPlayer2Blocked,
+            isPlayer2Active);
 
         // 1. Xác định đích đến THỰC TẾ (Nếu bị chặn thì đích đến chính là chỗ đang đứng)
         Vector3 actualTarget1 = isPlayer1Blocked ? currentPosition1 : finalTarget1;
@@ -170,6 +224,79 @@ public class PlayerMoving : MonoBehaviour
             player2.SetState(PlayerState.Moving);
             StartCoroutine(Move(player2, currentPosition2, direction, actualTarget2, isPlayer2Blocked));
         }
+    }
+
+    private static void ResolvePlayerDestinationCollision(
+        Player player1,
+        Vector3 currentPosition1,
+        ref Vector3 finalTarget1,
+        ref bool isPlayer1Blocked,
+        bool isPlayer1Active,
+        Player player2,
+        Vector3 currentPosition2,
+        ref Vector3 finalTarget2,
+        ref bool isPlayer2Blocked,
+        bool isPlayer2Active)
+    {
+        if (!isPlayer1Active || !isPlayer2Active ||
+            !WillCollidersOverlap(player1, finalTarget1, player2, finalTarget2))
+        {
+            return;
+        }
+
+        bool player1WillMove = !isPlayer1Blocked &&
+            (finalTarget1 - currentPosition1).sqrMagnitude > 0.0001f;
+        bool player2WillMove = !isPlayer2Blocked &&
+            (finalTarget2 - currentPosition2).sqrMagnitude > 0.0001f;
+
+        if (player1WillMove && !player2WillMove)
+        {
+            isPlayer1Blocked = true;
+            finalTarget1 = currentPosition1;
+        }
+        else if (player2WillMove && !player1WillMove)
+        {
+            isPlayer2Blocked = true;
+            finalTarget2 = currentPosition2;
+        }
+        else
+        {
+            // Hai nhân vật cùng nhắm vào một thể tích hoặc đã chồng lên nhau.
+            // Chặn cả hai để không tạo thêm một lần dính collider mới.
+            isPlayer1Blocked = true;
+            isPlayer2Blocked = true;
+            finalTarget1 = currentPosition1;
+            finalTarget2 = currentPosition2;
+        }
+
+        HapticManager.HeavyTaptic();
+    }
+
+    private static bool WillCollidersOverlap(
+        Player firstPlayer,
+        Vector3 firstPosition,
+        Player secondPlayer,
+        Vector3 secondPosition)
+    {
+        Collider firstCollider = firstPlayer.GetComponentInChildren<Collider>();
+        Collider secondCollider = secondPlayer.GetComponentInChildren<Collider>();
+        if (firstCollider == null || secondCollider == null) return false;
+
+        Bounds firstBounds = firstCollider.bounds;
+        firstBounds.center += firstPosition - firstPlayer.transform.position;
+        firstBounds.extents = new Vector3(
+            Mathf.Max(0f, firstBounds.extents.x - 0.02f),
+            firstBounds.extents.y,
+            Mathf.Max(0f, firstBounds.extents.z - 0.02f));
+
+        Bounds secondBounds = secondCollider.bounds;
+        secondBounds.center += secondPosition - secondPlayer.transform.position;
+        secondBounds.extents = new Vector3(
+            Mathf.Max(0f, secondBounds.extents.x - 0.02f),
+            secondBounds.extents.y,
+            Mathf.Max(0f, secondBounds.extents.z - 0.02f));
+
+        return firstBounds.Intersects(secondBounds);
     }
 
 
@@ -271,6 +398,7 @@ public class PlayerMoving : MonoBehaviour
         isTrackingSwipe = false;
         startTouchPosition = Vector2.zero;
         endTouchPosition = Vector2.zero;
+        ClearBufferedMove();
     }
 
     public void SetInputEnabled(bool enabled)
@@ -279,6 +407,7 @@ public class PlayerMoving : MonoBehaviour
         isTrackingSwipe = false;
         startTouchPosition = Vector2.zero;
         endTouchPosition = Vector2.zero;
+        ClearBufferedMove();
     }
 
     private bool CanAcceptInput()
@@ -297,5 +426,12 @@ public class PlayerMoving : MonoBehaviour
         isTrackingSwipe = false;
         startTouchPosition = Vector2.zero;
         endTouchPosition = Vector2.zero;
+        ClearBufferedMove();
+    }
+
+    private void ClearBufferedMove()
+    {
+        hasBufferedMove = false;
+        bufferedMoveDirection = Vector3.zero;
     }
 }

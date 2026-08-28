@@ -23,6 +23,8 @@ public class IsometricGroupCamera : MonoBehaviour
     public float maxSize = 12f;
     public float distanceLimiter = 15f;
     public float zoomSmoothSpeed = 5f;
+    [Tooltip("Khoảng trống quanh hai nhân vật, tính theo world units.")]
+    [SerializeField] private float viewportPadding = 1.25f;
 
     private Vector3 velocity;
     private Camera cam;
@@ -31,6 +33,11 @@ public class IsometricGroupCamera : MonoBehaviour
     void Start()
     {
         cam = GetComponent<Camera>();
+
+        // Stylized Water đọc depth texture để tạo chuyển màu theo độ sâu và bọt ở mép nước.
+        // Dùng toán tử |= để không ghi đè các DepthTextureMode khác nếu hiệu ứng khác đã bật chúng.
+        cam.depthTextureMode |= DepthTextureMode.Depth;
+
         cam.orthographic = true;
         fixedSize = cam.orthographicSize;
 
@@ -70,11 +77,14 @@ public class IsometricGroupCamera : MonoBehaviour
 
     void ZoomCamera()
     {
-        // Đo khoảng cách giữa 2 nhân vật
-        float distanceBetweenTargets = Vector3.Distance(target1.position, target2.position);
-
-        // Tính toán Size phù hợp
-        float targetSize = Mathf.Lerp(minSize, maxSize, distanceBetweenTargets / distanceLimiter);
+        // Orthographic size is half of the visible height. Calculate in camera space
+        // so portrait and landscape screens frame the same gameplay area correctly.
+        Vector3 target1InView = transform.InverseTransformPoint(target1.position);
+        Vector3 target2InView = transform.InverseTransformPoint(target2.position);
+        float halfHeight = Mathf.Abs(target1InView.y - target2InView.y) * 0.5f + viewportPadding;
+        float halfWidth = Mathf.Abs(target1InView.x - target2InView.x) * 0.5f + viewportPadding;
+        float targetSize = Mathf.Max(halfHeight, halfWidth / cam.aspect);
+        targetSize = Mathf.Clamp(targetSize, minSize, maxSize);
 
         // Zoom mượt mà
         cam.orthographicSize = Mathf.Lerp(cam.orthographicSize, targetSize, Time.deltaTime * zoomSmoothSpeed);

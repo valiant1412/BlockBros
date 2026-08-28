@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28377165ba523e940a9874b2b48f04c8, type: 3}
+  m_Name: Skin
+  m_EditorClassIdentifier: Assembly-CSharp::SkinDatabaseSO
+  allSkins:
+  - skinID: default_skin
+    skinName: Default Skin
+    price: 0
+    skinIcon: {fileID: 21300000, guid: 639269b12586605468ffa3321ce82ea4, type: 3}
+    knightBigMaterial: {fileID: 2100000, guid: c12b6fb52d6161e4991b580206e4ecfa, type: 2}
+    knightMaterial: {fileID: -3089972107174891000, guid: c28e08117077a8340ac881afaa5fdcd3, type: 3}
+  - skinID: crimson
+    skinName: Crimson
+    price: 200
+    skinIcon: {fileID: 21300000, guid: a30f8228c9c913b42b0d574c9cf8f0b8, type: 3}
+    knightBigMaterial: {fileID: 2100000, guid: 8efdf04737e4b9a4ab64e510070d3e80, type: 2}
+    knightMaterial: {fileID: 2100000, guid: 3cf3e8fc589b6b04c80f5fe33cb48c74, type: 2}
+  - skinID: azure
+    skinName: Azure
+    price: 500
+    skinIcon: {fileID: 21300000, guid: f40a4f056f08d574792a4094d4dc08a5, type: 3}
+    knightBigMaterial: {fileID: 2100000, guid: 0651c20ab8c0e13408f82afc225e947f, type: 2}
+    knightMaterial: {fileID: 2100000, guid: e1339d80b960b564b96c202b75f48907, type: 2}
+  - skinID: emerald
+    skinName: Emerald
+    price: 1000
+    skinIcon: {fileID: 21300000, guid: 907967649b7114043ab113037d92d80b, type: 3}
+    knightBigMaterial: {fileID: 2100000, guid: d726932d990fc9b41af41820964c2190, type: 2}
+    knightMaterial: {fileID: 2100000, guid: 6ef78695a083ec542b7e0582ce8766b1, type: 2}

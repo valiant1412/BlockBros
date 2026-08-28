@@ -1,55 +1,70 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Xml.Serialization;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayerSkinManager : MonoBehaviour
 {
-    [Header("Cáº¥u hÃ¬nh")]
+    [Header("Cấu hình")]
     [SerializeField] private int playerIndex;
-    [SerializeField] private Renderer playerRenderer;
+    [Tooltip("Nếu để trống, script sẽ dùng tất cả Renderer bên trong Player.")]
+    [SerializeField] private Renderer[] playerRenderers;
     [SerializeField] private SkinDatabaseSO skinDatabase;
 
-    void Awake()
+    private void Awake()
     {
-        if (playerRenderer == null)
+        if (playerRenderers == null || playerRenderers.Length == 0)
         {
-            playerRenderer = GetComponentInChildren<Renderer>(true);
+            playerRenderers = GetComponentsInChildren<Renderer>(true);
         }
+    }
 
+    private void Start()
+    {
         LoadAndApplyPlayerSkin();
     }
-    void OnEnable()
+
+    private void OnEnable()
     {
-        SkinShopManager.OnSkinChanged += ApplyMaterial;
+        SkinShopManager.OnSkinChanged += ApplySkin;
     }
-    void OnDisable()
+    private void OnDisable()
     {
-        SkinShopManager.OnSkinChanged -= ApplyMaterial;
+        SkinShopManager.OnSkinChanged -= ApplySkin;
     }
-    void LoadAndApplyPlayerSkin()
+
+    private void LoadAndApplyPlayerSkin()
     {
-        var currentSkin = SaveManager.Instance.gameData.currentSkin[playerIndex];
-        foreach (var data in skinDatabase.allSkins)
-        {
-            if (data.skinID == currentSkin)
-            {
-                ApplyMaterialLocal(data.skinMaterial);
-                return;
-            }
-        }
+        if (SaveManager.Instance == null || SaveManager.Instance.gameData == null || skinDatabase == null) return;
+
+        string currentSkin = SaveManager.Instance.gameData.currentSkin[playerIndex];
+        ApplySkinByID(currentSkin);
     }
-    void ApplyMaterial(int targetPlayerIndex, Material mat)
+
+    private void ApplySkin(int targetPlayerIndex, string skinID)
     {
         if (targetPlayerIndex != playerIndex) return;
-        ApplyMaterialLocal(mat);
+        ApplySkinByID(skinID);
     }
-    void ApplyMaterialLocal(Material mat)
+
+    private void ApplySkinByID(string skinID)
     {
-        if (playerRenderer != null && mat != null)
+        if (skinDatabase == null) return;
+
+        if (!skinDatabase.TryGetMaterial(skinID, playerIndex, out Material material))
         {
-            playerRenderer.material = mat;
+            Debug.LogWarning($"Không tìm thấy material skin '{skinID}' cho Player {playerIndex + 1}.", this);
+            return;
+        }
+
+        foreach (Renderer renderer in playerRenderers)
+        {
+            if (renderer == null) continue;
+
+            Material[] materials = renderer.sharedMaterials;
+            for (int i = 0; i < materials.Length; i++)
+            {
+                materials[i] = material;
+            }
+
+            renderer.sharedMaterials = materials;
         }
     }
 }

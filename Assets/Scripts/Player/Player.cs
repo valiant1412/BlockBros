@@ -49,7 +49,10 @@ public class Player : MonoBehaviour
         if (Physics.Raycast(origin, direction, out hit, 1f, blockLayer))
         {
             Debug.DrawRay(hit.point, hit.normal * 2f, Color.black, 2f);
-            if (Mathf.Abs(hit.normal.y) < 0.01f || hit.collider.CompareTag("Trap"))
+            // Stair colliders have vertical risers. They are walkable surfaces, so a
+            // horizontal ray hitting a riser must not be treated as a wall.
+            bool isStair = hit.collider.CompareTag("Stair");
+            if ((!isStair && Mathf.Abs(hit.normal.y) < 0.01f) || hit.collider.CompareTag("Trap"))
             {
                 isBlockByObject = true;
                 return isBlockByObject;
@@ -70,7 +73,10 @@ public class Player : MonoBehaviour
             return false;
         }
 
-        isBlockByPlayer = player.CheckBlockedByObject(player.transform.position, direction, blockLayer);
+        // Đã thấy một nhân vật đang đứng ở hướng đi thì đó là vật cản trực tiếp.
+        // Việc nhân vật đó có đang đứng trước tường hay không không làm thay đổi
+        // việc ô của họ đang bị chiếm.
+        isBlockByPlayer = true;
         return isBlockByPlayer;
     }
     public void SetState(PlayerState newState)

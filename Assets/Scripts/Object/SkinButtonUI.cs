@@ -1,100 +1,70 @@
-
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Image = UnityEngine.UI.Image;
+
+/// <summary>
+/// Một Board trong danh sách skin. Board chỉ dùng để chọn skin;
+/// việc mua/trang bị luôn thực hiện bằng nút cố định ở cuối Shop.
+/// </summary>
 public class SkinButtonUI : MonoBehaviour
 {
-    // Start is called before the first frame update
     [SerializeField] private TextMeshProUGUI skinName;
-
-
-    [SerializeField] private Image outlineImage;
     [SerializeField] private Image icon;
-
-    [SerializeField] private Button actionBtn;
-
     [SerializeField] private TextMeshProUGUI price;
 
-    private SkinItem mySkinItem;
-    private string skin_ID;
-    public void Setup(SkinItem skinItem)
+    private SkinItem skinItem;
+    private Button selectButton;
+    private Outline selectedOutline;
+
+    public string SkinId => skinItem != null ? skinItem.skinID : string.Empty;
+
+    public void Setup(SkinItem item)
     {
-        mySkinItem = skinItem;
-        skinName.text = mySkinItem.skinName;
-        icon.sprite = mySkinItem.skinIcon;
-        price.text = mySkinItem.price.ToString();
-        skin_ID = mySkinItem.skinID;
+        skinItem = item;
 
-        actionBtn.onClick.RemoveAllListeners();
-        actionBtn.onClick.AddListener(OnClickButton);
+        if (skinName != null) skinName.text = skinItem.skinName;
+        if (icon != null) icon.sprite = skinItem.skinIcon;
 
-        ResetState();
+        ConfigureAsSelectableBoard();
     }
 
-    public void OnClickButton()
+    private void ConfigureAsSelectableBoard()
     {
-        GameData gameData = SaveManager.Instance.gameData;
-        int currentViewIndex = SkinShopManager.Instance.currentViewingPlayerIndex;
-        bool isOwned = gameData.Inventories[currentViewIndex].OwnedSkins.Contains(skin_ID);
-        bool isEquipped = gameData.currentSkin[currentViewIndex] == skin_ID;
-        if (isOwned)
+        // Board chỉ có Image nền. Tạo Button lúc chạy giúp prefab gọn và không cần
+        // đặt nút mua nhỏ bên trong từng Board.
+        selectButton = GetComponent<Button>();
+        if (selectButton == null) selectButton = gameObject.AddComponent<Button>();
+
+        selectButton.targetGraphic = GetComponent<Image>();
+        selectButton.onClick.RemoveListener(SelectThisSkin);
+        selectButton.onClick.AddListener(SelectThisSkin);
+
+        // Các Graphic con không chặn raycast của Button ở Board nền.
+        foreach (Graphic graphic in GetComponentsInChildren<Graphic>(true))
         {
-            if (!isEquipped)
-            {
-                // doi sang current.
-                gameData.currentSkin[currentViewIndex] = mySkinItem.skinID;
-            }
+            if (graphic.gameObject != gameObject) graphic.raycastTarget = false;
         }
-        else
-        {
-            // trong truong hop mua.
-            int price = mySkinItem.price;
-            EconomyManager.Instance.BuySkin(price, out bool isAbleToBuy);
-            if (!isAbleToBuy)
-            {
-                Debug.Log("Khong the mua");
-            }
-            else
-            {
-                gameData.Inventories[currentViewIndex].OwnedSkins.Add(mySkinItem.skinID);
-            }
-        }
-        SaveManager.Instance.SaveGame();
-        SkinShopManager.Instance.RefreshAllShop();
-        SkinShopManager.OnSkinChanged?.Invoke(currentViewIndex, mySkinItem.skinMaterial);
+
+        selectedOutline = GetComponent<Outline>();
+        if (selectedOutline == null) selectedOutline = gameObject.AddComponent<Outline>();
+        selectedOutline.effectColor = new Color(1f, 0.66f, 0.08f, 1f);
+        selectedOutline.effectDistance = new Vector2(5f, -5f);
+        selectedOutline.useGraphicAlpha = false;
     }
-    public void ResetState()
+
+    private void SelectThisSkin()
     {
-        GameData gameData = SaveManager.Instance.gameData;
-        int currentViewIndex = SkinShopManager.Instance.currentViewingPlayerIndex;
-        bool isOwned = gameData.Inventories[currentViewIndex].OwnedSkins.Contains(skin_ID);
-        var currentSkin = gameData.currentSkin[currentViewIndex];
+        if (SkinShopManager.Instance != null) SkinShopManager.Instance.SelectSkin(SkinId);
+    }
 
-        bool isEquipped = currentSkin == skin_ID;
+    public void RefreshState(string selectedSkinId, bool isOwned, bool isEquipped)
+    {
+        if (selectedOutline != null) selectedOutline.enabled = SkinId == selectedSkinId;
 
-        if (isOwned)
-        {
-            if (!isEquipped)
-            {
-                price.text = "SELECT";
-                if (outlineImage != null) outlineImage.color = Color.yellow;
-                actionBtn.interactable = true;
-            }
-            else
-            {
-                price.text = "EQUIPPED";
-                if (outlineImage != null) outlineImage.color = Color.green;
-                actionBtn.interactable = false;
-            }
+        if (price == null || skinItem == null) return;
 
-
-        }
-        else
-        {
-            price.text = GoldFormatter.FormatGold(mySkinItem.price);
-            if (outlineImage != null) outlineImage.color = Color.gray;
-            actionBtn.interactable = true;
-        }
+        if (isEquipped) price.text = "ĐANG TRANG BỊ";
+        else if (isOwned) price.text = "✓ ĐÃ CÓ";
+        else price.text = $"★ {GoldFormatter.FormatGold(skinItem.price)}";
     }
 }

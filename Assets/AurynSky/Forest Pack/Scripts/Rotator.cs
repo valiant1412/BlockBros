@@ -2,18 +2,20 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Rotator : MonoBehaviour {
+public class Rotator1 : MonoBehaviour
+{
 
-    public float speed;
+	public float speed;
 
 	// Use this for initialization
-	void Start () {
-		
+	void Start()
+	{
+
 	}
-	
+
 	// Update is called once per frame
-	void Update ()
-    {
-        transform.Rotate(Vector3.up * speed * Time.deltaTime);
+	void Update()
+	{
+		transform.Rotate(Vector3.up * speed * Time.deltaTime);
 	}
 }

@@ -11,6 +11,8 @@ public class GameManager : MonoBehaviour
 
     private Player player2;
     public bool IsInstantiate { get; private set; }
+    // Cho UI biết input đang được bật do gameplay hay đang bị tắt bởi một popup/menu.
+    public bool IsGameplayActive { get; private set; }
     private LevelContext currentLevelContext;
     // Start is called before the first frame update
     void Awake()
@@ -76,6 +78,8 @@ public class GameManager : MonoBehaviour
 
     public void SetGameplayActive(bool isActive)
     {
+        IsGameplayActive = isActive;
+
         if (PlayerMoving.Instance != null)
         {
             PlayerMoving.Instance.SetInputEnabled(isActive);

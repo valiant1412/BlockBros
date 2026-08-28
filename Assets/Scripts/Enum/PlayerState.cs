@@ -7,5 +7,4 @@ public enum PlayerState
     Stand,
     Moving,
     Exit,
-
 }

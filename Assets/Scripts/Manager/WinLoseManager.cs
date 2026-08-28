@@ -1,8 +1,11 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class WinLoseManager : MonoBehaviour
 {
+    private const int ConfettiSortingOrder = 100;
+
     public static WinLoseManager Instance;
     [Header("Nhân vật chơi")]
     [SerializeField] private Player player1;
@@ -13,6 +16,10 @@ public class WinLoseManager : MonoBehaviour
     [SerializeField] private GameObject winUI;
 
     [SerializeField] private GameObject loseUI;
+
+    [Header("Win Effect")]
+    [SerializeField] private GameObject winConfettiPrefab;
+    [SerializeField, Min(0f)] private float confettiDuration = 5f;
 
     public bool isGameEnded = false;
     public bool isGameWon = false;
@@ -93,6 +100,7 @@ public class WinLoseManager : MonoBehaviour
         }
 
         winUI.SetActive(true);
+        PlayWinConfetti();
         if (EconomyManager.Instance != null) EconomyManager.Instance.AddMoney(100);
     }
 
@@ -109,6 +117,41 @@ public class WinLoseManager : MonoBehaviour
         if (loseUI.activeInHierarchy)
         {
             loseUI.SetActive(false);
+        }
+    }
+
+    private void PlayWinConfetti()
+    {
+        if (winConfettiPrefab == null)
+        {
+            return;
+        }
+
+        Camera mainCamera = Camera.main;
+        Vector3 spawnPosition = mainCamera != null
+            ? mainCamera.transform.position + mainCamera.transform.forward * 8f
+            : Vector3.zero;
+        Quaternion spawnRotation = mainCamera != null ? mainCamera.transform.rotation : Quaternion.identity;
+
+        GameObject confetti = Instantiate(winConfettiPrefab, spawnPosition, spawnRotation);
+        foreach (ParticleSystem particleSystem in confetti.GetComponentsInChildren<ParticleSystem>())
+        {
+            ParticleSystem.MainModule main = particleSystem.main;
+            main.useUnscaledTime = true;
+            particleSystem.GetComponent<ParticleSystemRenderer>().sortingOrder = ConfettiSortingOrder;
+            particleSystem.Play(true);
+        }
+
+        StartCoroutine(DestroyAfterRealtime(confetti, confettiDuration));
+    }
+
+    private static IEnumerator DestroyAfterRealtime(GameObject effect, float duration)
+    {
+        yield return new WaitForSecondsRealtime(duration);
+
+        if (effect != null)
+        {
+            Destroy(effect);
         }
     }
 

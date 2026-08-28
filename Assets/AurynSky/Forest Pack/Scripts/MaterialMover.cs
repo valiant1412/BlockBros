@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MaterialMover : MonoBehaviour
+public class MaterialMover1 : MonoBehaviour
 {
 
     public float scrollSpeed = 0.5F;

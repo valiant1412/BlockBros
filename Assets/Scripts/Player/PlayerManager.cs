@@ -30,13 +30,13 @@ public class PlayerManager : MonoBehaviour
 
     public bool IsBlocked(Player player, Vector3 currentPosition, Vector3 direction, out Vector3 finalTarget)
     {
-        // 1. TIA NGANG: Kiểm tra vật cản thẳng đứng (Tường, Khối, Người chơi khác)
+        // 1. TIA NGANG: chỉ kiểm tra địa hình tĩnh. Va chạm giữa hai nhân vật
+        // được xét tại đích của cả hai trong PlayerMoving để tránh chồng collider.
         var isBlock = player.CheckBlockedByObject(currentPosition, direction, blockLayer);
-        var isBlockByPlayer = player.CheckBlockedByPlayer(currentPosition, direction, playerLayer);
 
         // Nếu bị chặn ngang -> Kết thúc hàm, không cho đi, không bắn tia dọc nữa!
 
-        if (isBlock || isBlockByPlayer)
+        if (isBlock)
         {
             HapticManager.HeavyTaptic();
             finalTarget = currentPosition;
@@ -73,14 +73,6 @@ public class PlayerManager : MonoBehaviour
             // Nhảy an toàn (Bằng phẳng hoặc dốc)
             finalTarget = hit.point;
             finalTarget.y += distanceToBottom;
-            if (Physics.Raycast(rayCastingPoint, Vector3.down, out RaycastHit newHit, 20f, playerLayer))
-            {
-                var besidePlayer = newHit.collider.GetComponentInParent<Player>();
-                if (besidePlayer != null && besidePlayer.isBlockByObject)
-                {
-                    return true;
-                }
-            }
         }
         else
         {

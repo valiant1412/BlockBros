@@ -96,6 +96,9 @@ MonoBehaviour:
   outlineImage: {fileID: 3525858078357268226}
   icon: {fileID: 2202838307867630338}
   actionBtn: {fileID: 3672930167835307568}
+  actionButtonImage: {fileID: 7487098994033550018}
+  greenButton: {fileID: 21300000, guid: 66a0aea6fe4e7a149ae15503848f5e17, type: 3}
+  yellowButton: {fileID: 21300000, guid: 016e2c56281be1d47924055bddfd3bc5, type: 3}
   price: {fileID: 1035927462935491102}
 --- !u!1 &1127432548065032018
 GameObject:
@@ -276,7 +279,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -285,7 +288,7 @@ MonoBehaviour:
       m_Calls: []
   m_Sprite: {fileID: 0}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
